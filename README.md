@@ -1,0 +1,52 @@
+# 3D Printed Mill Driver
+
+Control-system notes for a small 3D-printed hobby CNC milling machine, built from common off-the-shelf 3D printer hardware and open-source software.
+
+## What this is
+
+A setup guide for people who already know 3D printers (Marlin/Klipper) and want to run a CNC mill the same way:
+
+| Layer | Choice |
+| --- | --- |
+| Motion controller | BTT SKR Pico V1.0 (RP2040, on-board TMC2209 drivers) |
+| Firmware | [grblHAL](https://github.com/grblHAL), built with the grblHAL Web Builder |
+| Motors | NEMA17 steppers |
+| Host | Raspberry Pi (64-bit Raspberry Pi OS) with a touchscreen |
+| Sender (UI) | gSender (recommended); bCNC is an alternative with less evidence on this stack |
+
+## Read the guide
+
+**[docs/setup-guide.md](docs/setup-guide.md)** walks through, in order:
+
+0. Building the Raspberry Pi image, first boot and installing gSender
+1. Building and flashing grblHAL on the SKR Pico
+2. Connecting and verifying the board
+3. Motor current, microsteps, steps/mm and motion settings
+4. Limit switches, probe and spindle
+5. Homing and soft limits
+6. Pi, touchscreen and sender setup
+
+It also has a safety checklist and glossary written for teenagers and first-timers, a troubleshooting table, and a sources list.
+
+## Status and honesty notes
+
+This is a research-based guide, not a record of a finished, tested build. Parts that could not be verified are listed in the guide's "Sources and gaps" section. The main ones:
+
+- The SKR Pico board map's exact pins (limits, probe, spindle PWM) were not read directly. Use the `$PINS` command and BTT's pinout PDF on your own board.
+- Whether the Web Builder offers the Trinamic (TMC2209 UART) option for this board should be confirmed after flashing: `$$` must list `$140`–`$143` and `$150`–`$153`.
+- Powering the Pi from the board's 5 V output while USB is also connected is not confirmed safe.
+- Conservative speeds, the 0.5 A starting current and the E-stop advice are recommendations, not vendor figures.
+
+Known SKR Pico issues are covered in the guide: start-up current ([grblHAL/RP2040 issue 74](https://github.com/grblHAL/RP2040/issues/74)) and the Hotwire-variant UART address swap ([PR 204](https://github.com/grblHAL/RP2040/pull/204)).
+
+## Safety
+
+This project involves a spinning cutter, motor power supplies and possibly mains-powered equipment. Fit an emergency stop, test with the spindle off first, and have an adult supervise if you are under 18.
+
+## Contributing
+
+Corrections are welcome, especially verified pin assignments, confirmed Web Builder options, and bCNC-on-Pi install steps. Please cite a source or say how you tested it.
+
+## Licence
+
+No licence has been chosen yet. Add one before accepting outside contributions.
