@@ -53,7 +53,7 @@ flowchart LR
   PS["Probe and spindle (optional)<br/>find pins with $PINS first"] -.-> PICO
 ```
 
-The Pi and its touchscreen are one unit; a single USB-C cable carries all G-code and status between the Pi and the Pico. Steppers, limit switches and power wire straight to the Pico; dashed lines are optional or alternatives. Pin names are deliberately not shown: confirm them on your own board with `$PINS` and BTT's pinout PDF.
+The Pi and its touchscreen are one unit; a single USB-C cable carries all G-code and status between the Pi and the Pico. Steppers, limit switches and power wire straight to the Pico; dashed lines are optional or alternatives. Pin names are deliberately not shown: confirm them on your own board with `$PINS` and [BTT's pinout PDF](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/Hardware/BTT%20SKR%20Pico%20V1.0-PIN.pdf).
 
 | Part | Notes |
 | --- | --- |
@@ -195,7 +195,7 @@ Start-up current workaround from the tracker: `$1=25` with `$37=0` reduced the p
 Pin assignments are fixed at compile time by the board map file, and I could not open the SKR Pico map directly (GitHub blocks automated fetches). So **do not copy pins from this guide: read them from your own board**.
 
 1. Send `$PINS` (see step 2) and note which inputs and outputs your build exposes.
-2. Check BTT's pinout PDF (`BTT SKR Pico V1.0-PIN.pdf`, referenced on the [BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)) for connector names.
+2. Check [BTT's pinout PDF](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/Hardware/BTT%20SKR%20Pico%20V1.0-PIN.pdf) (`BTT SKR Pico V1.0-PIN.pdf`, also referenced on the [BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)) for connector names.
 3. Wire one input at a time and watch it in the sender or with `?` status reports.
 
 What the sources do confirm:
