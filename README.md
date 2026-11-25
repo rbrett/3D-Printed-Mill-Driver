@@ -49,4 +49,6 @@ Corrections are welcome, especially verified pin assignments, confirmed Web Buil
 
 ## Licence
 
-No licence has been chosen yet. Add one before accepting outside contributions.
+The guide and README text are licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](LICENSE). You may share and adapt them, including commercially, if you credit this repository and release your adaptations under the same licence.
+
+This licence covers the documentation only. It does not apply to the upstream projects this guide describes (grblHAL, gSender, bCNC, Raspberry Pi OS and others), which keep their own licences. Any code, configuration or firmware files added to this repository later (for example modified grblHAL build settings) will be licensed separately, and code derived from GPL-licensed projects must keep that licence (check each upstream repository's own licence file).
