@@ -43,6 +43,10 @@ Known SKR Pico issues are covered in the guide: start-up current ([grblHAL/RP204
 
 This project involves a spinning cutter, motor power supplies and possibly mains-powered equipment. Fit an emergency stop, test with the spindle off first, and have an adult supervise if you are under 18.
 
+## Third-party material and acknowledgements
+
+The board pin diagram is © BIGTREETECH and is not reproduced here. Read it at the source: [BTT SKR Pico V1.0 pinout PDF](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/Hardware/BTT%20SKR%20Pico%20V1.0-PIN.pdf) (from [bigtreetech/SKR-Pico](https://github.com/bigtreetech/SKR-Pico), commit `3fa0052`). That repository has no licence file, so this project links to it rather than redistributing a copy. Thanks to BIGTREETECH, the grblHAL maintainers, Sienci Labs (gSender) and the bCNC authors for their work.
+
 ## Contributing
 
 Corrections are welcome, especially verified pin assignments, confirmed Web Builder options, and bCNC-on-Pi install steps. Please cite a source or say how you tested it.
