@@ -44,7 +44,7 @@ flowchart LR
   PIPSU["Pi power supply<br/>own supply while commissioning"] --> PI
   PI <-->|"USB-C cable, 115200 baud"| PICO["BTT SKR Pico V1.0<br/>grblHAL, TMC2209 drivers on board"]
   PC["Any PC or laptop<br/>Windows, Linux or Mac"] -.->|"alternative: same USB-C"| PICO
-  PSU["12 or 24 V supply"] --> PICO
+  PSU["12 to 24 V DC supply"] --> PICO
   PICO -->|motor leads| X["X stepper (NEMA17)"]
   PICO --> Y["Y stepper (NEMA17)"]
   PICO --> Z["Z stepper (NEMA17)"]
@@ -57,14 +57,14 @@ The Pi and its touchscreen are one unit; a single USB-C cable carries all G-code
 
 | Part | Notes |
 | --- | --- |
-| BTT SKR Pico V1.0 | RP2040, 12/24 V input, 3.3 V logic, TMC2209 drivers soldered on (a dead driver means replacing the board) |
+| BTT SKR Pico V1.0 | RP2040, 12 to 24 V DC input, 3.3 V logic, TMC2209 drivers soldered on (a dead driver means replacing the board) |
 | NEMA17 steppers | Match current to the motor rating; TMC2209 tops out at 2 A RMS per the datasheet and BTT advises a fan above 0.8 A |
 | Raspberry Pi 4 or better, 64-bit OS | gSender's Pi build is 64-bit only; a Pi 3B+ is reported to work with the visualizer off |
 | Touchscreen | Larger is better: forum reports say small screens struggle with sender layouts |
-| 12 or 24 V PSU | Size it for all motors plus margin; one grblHAL SKR Pico build guide recommends 150 W minimum for a foam cutter |
+| 12 to 24 V DC PSU | Size it for all motors plus margin; one grblHAL SKR Pico build guide recommends 150 W minimum for a foam cutter |
 | Limit switches (NC), probe, spindle | Wiring covered in step 4 |
 
-**Power supply tip: reuse an old laptop or docking-station charger.** These usually output around 19 V DC, which sits inside the SKR Pico's 12/24 V input range ([BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)) and within the 5.5 to 28 V motor-supply range quoted for TMC2209 driver modules ([Fysetc](https://fysetc.github.io/Silent2209)). A used 65 to 90 W unit is a cheap way to power the board and steppers. The checks below are my engineering notes, not from the sources:
+**Power supply tip: reuse an old laptop or docking-station charger.** These usually output around 19 V DC, which sits inside the SKR Pico's 12 to 24 V DC input range ([BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)) and within the 5.5 to 28 V motor-supply range quoted for TMC2209 driver modules ([Fysetc](https://fysetc.github.io/Silent2209)). A used 65 to 90 W unit is a cheap way to power the board and steppers. The checks below are my engineering notes, not from the sources:
 
 - **Read the label.** You need DC output (not AC), the voltage, and the amps. Volts × amps = watts. Add up your motor currents with a margin; the foam-cutter build guide I read recommends at least 150 W for its machine ([RC Keith](https://rckeith.co.uk/electronics-build-guide-btt-skr-pico/)), so a small charger suits only modest motor currents. Test before trusting it.
 - **Keep it at or under 24 V.** 19 to 20 V is fine. I could not confirm the board's tolerance above 24 V, so do not use higher-voltage chargers.
@@ -141,7 +141,7 @@ If you are updating existing firmware, save the output of `$$` first; updates ca
 
 **In plain English:** a terminal is a text chat with the board. You type a command that starts with `$`, it types back. `$I` means "who are you?" and `$$` means "list all your settings". If both answer, the firmware is alive and the USB cable works.
 
-Do this on the bench with the 12/24 V supply on and motors **disconnected**. Powering the board from the motor supply, not USB alone, is the normal configuration.
+Do this on the bench with the 12 to 24 V DC supply on and motors **disconnected**. Powering the board from the motor supply, not USB alone, is the normal configuration.
 
 1. Connect USB-C to a PC. Open a serial terminal at 115200 baud, 8N1 (or use gSender's console).
 2. Send `$I`. You should see the grblHAL version and a `[BOARD:...]` line naming the SKR Pico.
@@ -204,7 +204,7 @@ What the sources do confirm:
 - **Fourth driver.** GPIO 13–15 serve the 4th Trinamic driver, so control inputs on those pins are lost when the 4th axis is used ([issue 42](https://github.com/grblHAL/RP2040/issues/42)). A single ganged or auto-squared axis (for example dual Z) is selected in the Web Builder's axis dropdown ([discussion 572](https://github.com/grblHAL/core/discussions/572)).
 - **Probe.** BTT lists a proximity-switch input with a PNP/NPN jumper; check the PDF for pin and polarity, and set `$6` to match.
 - **Spindle.** BTT lists a dedicated laser port and 3 PWM fan ports ([BTT release post](https://bigtree-tech.com/blogs/news/new-release-bigtreetech-skr-pico-v1-0-control-board)). I could not confirm which is the grblHAL spindle PWM, so find it with `$PINS` before wiring a spindle or VFD.
-- **Fan.** One guide powers the cooling fan directly from 12/24 V, not the FAN sockets.
+- **Fan.** One guide powers the cooling fan directly from 12 to 24 V DC, not the FAN sockets.
 
 Until the machine is homed and limits tested, keep spindle power off and use a hardware E-stop in the supply line, not only software reset.
 
