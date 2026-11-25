@@ -255,23 +255,52 @@ Power the Pi from its own supply while you commission, until you have read BTT's
 | False limit alarms | Noise on switch wires | Shielded cable, shield grounded at the controller only |
 | gSender will not start on the Pi | 32-bit OS or sandbox restrictions | Use 64-bit Pi OS; see the [Sienci megathread](https://forum.sienci.com/t/raspberry-pi-install-and-supported-versions-megathread/25617?page=5) |
 
-## Sources and gaps
+## References and other supporting documentation
 
-Pages consulted (the RP2040 repo, issues 42 and 74, the BTT wiki, the flashing docs and the RC Keith guide were opened in full; the rest are search excerpts):
+Every source used to put this guide together is listed here. Pages marked (full) were opened and read in full; the rest were read as search excerpts, so check them before relying on a detail. Compiled in November 2026; link contents may have changed since.
 
-- [grblHAL RP2040 driver](https://www.github.com/grblHAL/RP2040), [issue 42](https://github.com/grblHAL/RP2040/issues/42), [issue 74](https://github.com/grblHAL/RP2040/issues/74), [PR 204](https://github.com/grblHAL/RP2040/pull/204), [discussion 572](https://github.com/grblHAL/core/discussions/572)
-- [grblHAL firmware flashing docs](https://petervanderwalt.github.io/grblhal_docs/Getting-Started/firmware-flashing) and [settings reference](https://petervanderwalt.github.io/grblhal_docs/Reference/complete-settings-reference) (a community-hosted mirror, not the official wiki)
-- [grblHAL motor plugins README](https://github.com/grblHAL/Plugins_motor/blob/master/README.md)
-- [BTT SKR Pico wiki](https://global.bttwiki.com/SKR%20Pico.html) and [BTT release post](https://bigtree-tech.com/blogs/news/new-release-bigtreetech-skr-pico-v1-0-control-board)
-- [RC Keith SKR Pico grblHAL build guide](https://rckeith.co.uk/electronics-build-guide-btt-skr-pico/) (a foam cutter, so its values are not mill values)
-- [gSender 1.6.0 release](https://sienci.com/2026/04/16/gsender-1-6-0-release/), [gSender README](https://github.com/Sienci-Labs/gsender), [Sienci Pi megathread](https://forum.sienci.com/t/raspberry-pi-install-and-supported-versions-megathread/25617?page=5)
-- Raspberry Pi: [Getting started](https://www.raspberrypi.com/documentation/computers/getting-started.html), [Imager](https://www.raspberrypi.com/documentation/computers/imager.html), [Remote access](https://www.raspberrypi.com/documentation/computers/remote-access.html), [Sienci Pi install notes](https://resources.sienci.com/view/gdocs/)
+### Hardware: BIGTREETECH SKR Pico
 
-**Not verified, check before relying on them:**
+- [BTT SKR Pico wiki](https://global.bttwiki.com/SKR%20Pico.html) (full): board features, input voltage, sensorless-homing limits.
+- [BTT SKR Pico V1.0 pinout PDF](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/Hardware/BTT%20SKR%20Pico%20V1.0-PIN.pdf) (commit 3fa0052): connector and pin names. Copyright BIGTREETECH; linked, not copied.
+- [bigtreetech/SKR-Pico repository](https://github.com/bigtreetech/SKR-Pico): manuals, schematics and board drawings.
+- [BTT release post](https://bigtree-tech.com/blogs/news/new-release-bigtreetech-skr-pico-v1-0-control-board): launch overview, including the 5 V output.
+- [Fysetc TMC2209 notes](https://fysetc.github.io/Silent2209): motor-supply voltage range quoted for TMC2209 driver modules.
 
-- The SKR Pico board map's exact pins for limits, probe and spindle PWM (use `$PINS` and BTT's pinout PDF).
-- Whether the current Web Builder offers a Trinamic option for this board (the docs page did not mention it; settings `$140`+ are evidenced by the build guide and issue 42).
+### Firmware: grblHAL
+
+- [grblHAL project](https://github.com/grblHAL) and the [RP2040 driver](https://www.github.com/grblHAL/RP2040) (full): the firmware and the driver this board uses.
+- RP2040 driver known issues: [issue 42](https://github.com/grblHAL/RP2040/issues/42) (full, fourth-driver pins), [issue 74](https://github.com/grblHAL/RP2040/issues/74) (full, start-up current) and [PR 204](https://github.com/grblHAL/RP2040/pull/204) (TMC UART address map).
+- [grblHAL core discussion 572](https://github.com/grblHAL/core/discussions/572).
+- [grblHAL motor plugins README](https://github.com/grblHAL/Plugins_motor/blob/master/README.md): Trinamic driver support.
+- [Firmware flashing docs](https://petervanderwalt.github.io/grblhal_docs/Getting-Started/firmware-flashing) (full) and [settings reference](https://petervanderwalt.github.io/grblhal_docs/Reference/complete-settings-reference): community-hosted mirror of the grblHAL documentation, not the official wiki.
+- [Sienci grbl/grblHAL useful commands](https://sienci.zendesk.com/hc/en-us/articles/36094043206036-grbl-grblHAL-Useful-Commands): `$$=n`, `$ESG`, `$EAG`, `$X`.
+
+### Worked example
+
+- [RC Keith: SKR Pico grblHAL build guide](https://rckeith.co.uk/electronics-build-guide-btt-skr-pico/) (full): a foam cutter, so its values are a reference for the process, not for a mill.
+
+### G-code senders
+
+- gSender: [repository and README](https://github.com/Sienci-Labs/gsender), [releases](https://github.com/Sienci-Labs/gsender/releases), [1.6.0 release notes](https://sienci.com/2026/04/16/gsender-1-6-0-release/), [Sienci Raspberry Pi megathread](https://forum.sienci.com/t/raspberry-pi-install-and-supported-versions-megathread/25617?page=5), [Sienci documentation](https://resources.sienci.com/view/gdocs/) and a [Carbide 3D forum thread](https://community.carbide3d.com/t/gsender-from-sienci-labs-cncjs-based-sender/35937) on visualiser performance.
+- bCNC: [repository](https://github.com/vlachoudis/bCNC) and one [OpenBuilds forum post](https://openbuilds.com/posts/111276/) reporting it running with grblHAL on a Pi 3B+ (2021, a single user).
+
+### Raspberry Pi
+
+- [Getting started](https://www.raspberrypi.com/documentation/computers/getting-started.html), [Imager](https://www.raspberrypi.com/documentation/computers/imager.html) and [remote access](https://www.raspberrypi.com/documentation/computers/remote-access.html) documentation.
+- [Raspberry Pi Imager download](https://www.raspberrypi.com/software/), [Imager announcement](https://www.raspberrypi.com/news/a-new-raspberry-pi-imager/) and the [kiosk-mode tutorial](https://www.raspberrypi.com/tutorials/how-to-use-a-raspberry-pi-in-kiosk-mode/).
+- [Raspberry Pi forum thread on hostnames in Imager](https://forums.raspberrypi.com/viewtopic.php?t=394644) (one user's report).
+
+### Licences
+
+- [Creative Commons CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/): the licence for this guide. My automated fetch of that site was refused, so the repository's `LICENSE` text came from the [choosealicense.com](https://choosealicense.com/licenses/cc-by-sa-4.0/) copy of it. Compare it with the official text.
+
+### Not verified: check before relying on them
+
+- The SKR Pico board map's exact pins for limits, probe and spindle PWM. Use `$PINS` and BTT's pinout PDF.
+- Whether the current Web Builder offers a Trinamic option for this board. The docs page did not mention it; settings `$140` and up are evidenced by the build guide and issue 42.
 - Whether powering the Pi from the board's 5 V and USB together is safe.
-- bCNC install steps on a current Pi OS; I only found one 2021 forum report of it working with grblHAL.
-- The `$PINS`, `$C`, `$X` and `$H` behaviour comes from community-hosted docs and standard Grbl convention; confirm with `$$=n` and `$ESG` on your firmware build.
-- Current limit and safety-engineering choices (E-stop, conservative speeds, 0.5 A start) are my recommendations, not vendor figures.
+- bCNC install steps on a current Pi OS; there is only the one 2021 report above.
+- The `$PINS`, `$C`, `$X` and `$H` behaviour comes from community-hosted docs and standard Grbl convention. Confirm with `$$=n` and `$ESG` on your firmware build.
+- The licences of the RP2040 driver and bCNC, and the grblHAL core licence (seen only on a mirror). Read each upstream licence file before reusing its code.
+- Current limit and safety-engineering choices (E-stop, conservative speeds, 0.5 A start) and the power-supply checks are my recommendations, not vendor figures.

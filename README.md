@@ -26,11 +26,11 @@ A setup guide for people who already know 3D printers (Marlin/Klipper) and want 
 5. Homing and soft limits
 6. Pi, touchscreen and sender setup
 
-It also has a safety checklist and glossary written for teenagers and first-timers, a troubleshooting table, and a sources list.
+It also has a safety checklist and glossary written for teenagers and first-timers, a troubleshooting table, and a full references section.
 
 ## Status and honesty notes
 
-This is a research-based guide, not a record of a finished, tested build. Parts that could not be verified are listed in the guide's "Sources and gaps" section. The main ones:
+This is a research-based guide, not a record of a finished, tested build. Parts that could not be verified are listed in the "Not verified" list in the guide's "References and other supporting documentation" section. The main ones:
 
 - The SKR Pico board map's exact pins (limits, probe, spindle PWM) were not read directly. Use the `$PINS` command and BTT's pinout PDF on your own board.
 - Whether the Web Builder offers the Trinamic (TMC2209 UART) option for this board should be confirmed after flashing: `$$` must list `$140`–`$143` and `$150`–`$153`.
