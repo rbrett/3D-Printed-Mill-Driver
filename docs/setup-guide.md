@@ -31,10 +31,29 @@ This project mixes electronics, power supplies and a machine with a spinning cut
 
 The Pi runs the sender (UI and G-code streaming); the SKR Pico runs grblHAL (step generation, limits, spindle) and its on-board TMC2209 drivers move the NEMA17s. They talk over USB serial.
 
+**The sender does not have to run on a Pi.** gSender or bCNC can run on any existing PC or laptop, whether Windows, Linux or Mac, connected to the SKR Pico by the same USB-C cable (gSender publishes Windows, Mac and Linux builds as well as a Pi build, per [Sienci](https://github.com/Sienci-Labs/gsender)). This guide uses a Raspberry Pi with a touchscreen so the machine is self-contained and needs no separate computer.
+
 1. Touchscreen → Raspberry Pi (Raspberry Pi OS, 64-bit) running gSender or bCNC.
 2. Pi → SKR Pico over USB-C (the Pico enumerates as a serial device; grblHAL uses 115200 baud, 8N1 on a terminal).
 3. SKR Pico → on-board TMC2209 drivers (UART mode, X, Y, Z1, Z2, E) → NEMA17 steppers.
 4. Limit switches, probe and spindle control wire to the Pico's inputs and outputs.
+
+```mermaid
+flowchart LR
+  TS["Touchscreen<br/>plugs into the Pi"] -->|display and touch| PI["Raspberry Pi<br/>gSender, 64-bit Pi OS"]
+  PIPSU["Pi power supply<br/>own supply while commissioning"] --> PI
+  PI <-->|"USB-C cable, 115200 baud"| PICO["BTT SKR Pico V1.0<br/>grblHAL, TMC2209 drivers on board"]
+  PC["Any PC or laptop<br/>Windows, Linux or Mac"] -.->|"alternative: same USB-C"| PICO
+  PSU["12 or 24 V supply"] --> PICO
+  PICO -->|motor leads| X["X stepper (NEMA17)"]
+  PICO --> Y["Y stepper (NEMA17)"]
+  PICO --> Z["Z stepper (NEMA17)"]
+  PICO -.-> Z2["Z2 or 4th axis (optional)"]
+  LIM["Limit switches X, Y, Z<br/>normally closed, signal and GND only, no 5 V"] --> PICO
+  PS["Probe and spindle (optional)<br/>find pins with $PINS first"] -.-> PICO
+```
+
+The Pi and its touchscreen are one unit; a single USB-C cable carries all G-code and status between the Pi and the Pico. Steppers, limit switches and power wire straight to the Pico; dashed lines are optional or alternatives. Pin names are deliberately not shown: confirm them on your own board with `$PINS` and BTT's pinout PDF.
 
 | Part | Notes |
 | --- | --- |
@@ -44,6 +63,15 @@ The Pi runs the sender (UI and G-code streaming); the SKR Pico runs grblHAL (ste
 | Touchscreen | Larger is better: forum reports say small screens struggle with sender layouts |
 | 12 or 24 V PSU | Size it for all motors plus margin; one grblHAL SKR Pico build guide recommends 150 W minimum for a foam cutter |
 | Limit switches (NC), probe, spindle | Wiring covered in step 4 |
+
+**Power supply tip: reuse an old laptop or docking-station charger.** These usually output around 19 V DC, which sits inside the SKR Pico's 12/24 V input range ([BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)) and within the 5.5 to 28 V motor-supply range quoted for TMC2209 driver modules ([Fysetc](https://fysetc.github.io/Silent2209)). A used 65 to 90 W unit is a cheap way to power the board and steppers. The checks below are my engineering notes, not from the sources:
+
+- **Read the label.** You need DC output (not AC), the voltage, and the amps. Volts × amps = watts. Add up your motor currents with a margin; the foam-cutter build guide I read recommends at least 150 W for its machine ([RC Keith](https://rckeith.co.uk/electronics-build-guide-btt-skr-pico/)), so a small charger suits only modest motor currents. Test before trusting it.
+- **Keep it at or under 24 V.** 19 to 20 V is fine. I could not confirm the board's tolerance above 24 V, so do not use higher-voltage chargers.
+- **Check polarity with a multimeter** before wiring. Most barrel plugs are centre-positive, but not all. Use a barrel-jack-to-screw-terminal adapter rather than hacking mains-side wiring, and have an adult supervise.
+- **Branded chargers can refuse unknown loads.** Some laptop chargers have an extra ID wire and cut power or limit output without it. If the output is dead or low, try another charger.
+- **USB-C laptop chargers are not a drop-in.** They negotiate their voltage and need a trigger module to deliver a fixed one.
+- **Fit a fuse and the E-stop on the DC side**, as in step 4.
 
 ## Read first: known SKR Pico risks
 
