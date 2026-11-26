@@ -26,7 +26,7 @@ A setup guide for people who already know 3D printers (Marlin/Klipper) and want 
 5. Homing and soft limits
 6. Pi, touchscreen and sender setup
 7. Configuring Fusion (post processor) to write G-code for this mill
-8. New and emerging open source CAD and CAM options (CamCraft, CADCraft), and why to stay with Fusion for now
+8. New and emerging open source CAD and CAM options (CamCraft, SOLIDcraft), and why to stay with Fusion for now
 
 It also has a safety checklist and glossary written for teenagers and first-timers, a troubleshooting table, and a full references section.
 

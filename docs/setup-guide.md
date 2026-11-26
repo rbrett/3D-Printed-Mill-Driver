@@ -425,7 +425,7 @@ Power the Pi from its own supply while you commission, until you have read BTT's
 
 **Stay with Fusion for now.** Two new open source projects aim at parts of the same job, but both are very young and changing fast. The author's note at the time of writing is that they are only weeks old (I could not confirm release dates). For a stable experience, keep using Fusion, and check back every few months to reassess.
 
-| | [CamCraft](https://neotech.github.io/Camcraft/) | [CADCraft](https://cadcraft.org/) |
+| | [CamCraft](https://neotech.github.io/Camcraft/) | [SOLIDcraft](https://cadcraft.org/) |
 | --- | --- | --- |
 | What it is | CAM: import a 3D model, define the stock, work offset and tools, add operations, then post G-code for a mill or lathe | 2D drafting in the AutoCAD style: typed commands such as LINE, CIRCLE and TRIM, layers, dimensions, hatches |
 | Replaces in this guide | The CAM and post-processing stages (Fusion's job in Step 7) | Only 2D drawing. Its own AutoCAD comparison puts 3D modelling on AutoCAD's side, so it is not a Fusion-style 3D modeller |
@@ -436,15 +436,15 @@ Power the Pi from its own supply while you commission, until you have read BTT's
 | Standout feature | Checks every toolpath against the part, stock, fixtures and machine, and refuses to post G-code it cannot show is safe | Every command can be driven by an AI agent (MCP, JSON or a command-line tool) |
 | Grbl or grblHAL | The page I read does not mention Grbl or a post processor | Not applicable: it makes drawings, not G-code |
 
-**What this means for your mill.** CamCraft could one day replace Fusion's CAM stage, but nothing I read says it has a Grbl or grblHAL post, so do not assume its G-code suits this controller. Its docs say every posted program is a first draft: check it in simulation, then dry-run it with the spindle off and Z raised. CADCraft is a drawing tool. If you cut flat parts from DXF or SVG it may be a free way to draw them, but it will not model a 3D part. cadcraft.org describes itself as an independent community guide, not affiliated with the ArtCraft team, so check its claims against the project's own releases.
+**What this means for your mill.** CamCraft could one day replace Fusion's CAM stage, but nothing I read says it has a Grbl or grblHAL post, so do not assume its G-code suits this controller. Its docs say every posted program is a first draft: check it in simulation, then dry-run it with the spindle off and Z raised. SOLIDcraft is a drawing tool. If you cut flat parts from DXF or SVG it may be a free way to draw them, but it will not model a 3D part. cadcraft.org describes itself as an independent community guide, not affiliated with the ArtCraft team, so check its claims against the project's own releases.
 
 **Installing them.** The suggested route is [CraftLauncher](https://github.com/EricVogt93/artcraft-launcher) (repository `artcraft-launcher`), a native desktop app by Eric Vogt for installing, launching and updating apps in the ArtCraft family, with builds for Linux, Windows, macOS and FreeBSD. Three cautions from its README:
 
-- It does not name CamCraft or CADCraft. It says new public `*craft` repositories under `storytold` are found automatically and that availability depends on published packages. Check that both appear in the launcher before relying on it.
+- It does not name CamCraft or SOLIDcraft. It says new public `*craft` repositories under `storytold` are found automatically and that availability depends on published packages. Check that both appear in the launcher before relying on it.
 - It is an independent project, not affiliated with ArtCraft or Storytold, with very few commits and little runtime testing outside Linux. App downloads are checked against SHA-256, and the README mentions no signature check for them.
-- CADCraft's page lists an "ArtCraft Launcher" as one install route, next to a Windows MSI, a macOS DMG, a Linux Flatpak, AppImage, deb and rpm packages, and a browser version. It does not say whether that is this launcher.
+- SOLIDcraft's page lists an "ArtCraft Launcher" as one install route, next to a Windows MSI, a macOS DMG, a Linux Flatpak, AppImage, deb and rpm packages, and a browser version. It does not say whether that is this launcher.
 
-If a package does not appear in the launcher, use the direct routes: CamCraft's desktop build from its GitHub releases page (0.26.0 when I looked), and CADCraft's installers, which come with SHA-256 checksums you can verify.
+If a package does not appear in the launcher, use the direct routes: CamCraft's desktop build from its GitHub releases page (0.26.0 when I looked), and SOLIDcraft's installers, which come with SHA-256 checksums you can verify.
 
 **How to try them without risking a cut.** These three steps are my suggestions, not the projects' instructions.
 
@@ -535,8 +535,8 @@ Every source used to put this guide together is listed here. Pages marked (full)
 ### New and emerging CAD and CAM
 
 - [CamCraft](https://neotech.github.io/Camcraft/): open source CAM, Apache-2.0, version 0.26.0 when read (26 Nov 2026).
-- [CADCraft](https://cadcraft.org/): 2D drafting, an independent community guide to the ArtCraft team's project, v0.18.0 when read (26 Nov 2026).
-- [CraftLauncher (artcraft-launcher)](https://github.com/EricVogt93/artcraft-launcher): independent installer and updater for the ArtCraft family, Apache-2.0; its README does not name CamCraft or CADCraft.
+- [SOLIDcraft](https://cadcraft.org/): 2D drafting, an independent community guide to the ArtCraft team's project, v0.18.0 when read (26 Nov 2026).
+- [CraftLauncher (artcraft-launcher)](https://github.com/EricVogt93/artcraft-launcher): independent installer and updater for the ArtCraft family, Apache-2.0; its README does not name CamCraft or SOLIDcraft.
 - [FreeCAD wiki, CAM development roadmap](https://wiki.freecad.org/CAM_Development_Roadmap): the established open source CAM workbench.
 
 ### Licences
@@ -553,4 +553,4 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - The licences of the RP2040 driver and bCNC, and the grblHAL core licence (seen only on a mirror). Read each upstream licence file before reusing its code.
 - Current limit and safety-engineering choices (E-stop, conservative speeds, 0.5 A start) and the power-supply checks are my recommendations, not vendor figures.
 - The Step 1 Web Builder walkthrough comes from reading the live page on 26 Nov 2026 (v1.0.1) without generating a build. I have not flashed this board. Whether the download is a bare `.uf2` or a zip is unconfirmed, and the bootloader steps come from BTT's manual and the Voron docs.
-- The CamCraft, CADCraft and CraftLauncher notes come from each project's front page or README on 26 Nov 2026. I could not confirm how new these projects are, whether CamCraft has a Grbl or grblHAL post, whether CraftLauncher lists CamCraft or CADCraft, or which "ArtCraft Launcher" CADCraft's page means. I have not installed or run any of them.
+- The CamCraft, SOLIDcraft and CraftLauncher notes come from each project's front page or README on 26 Nov 2026. I could not confirm how new these projects are, whether CamCraft has a Grbl or grblHAL post, whether CraftLauncher lists CamCraft or SOLIDcraft, or which "ArtCraft Launcher" SOLIDcraft's page means. I have not installed or run any of them.
