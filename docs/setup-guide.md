@@ -338,6 +338,41 @@ If an alarm triggers, `$X` unlocks it after you have moved clear. `$EAG` lists a
 
 Power the Pi from its own supply while you commission, until you have read BTT's pinout for the board's 5 V output (see the risks section). The SKR Pico has no network hardware, so grblHAL's WebUI and Ethernet options do not apply.
 
+## Step 7: Configure Fusion to write G-code for this mill
+
+**In plain English:** the post processor is the translator at the end of Fusion's CAM. It decides exactly which lines go into the G-code file. The wrong one can put commands in the file that your controller rejects, or handles differently than you expect.
+
+**Which post to use.**
+
+- **First choice: the OpenBuilds Fusion post for Grbl** (`OpenbuildsFusion360PostGrbl.cps`, from the [OpenBuilds repository](https://github.com/OpenBuilds/OpenBuilds-Fusion360-Postprocessor)). It is the only maintained Fusion post I found that names grblHAL: its README says it creates files for "GRBL/grblHAL based Openbuilds-style machines". It lists router, laser and plasma support, G54 to G59 work offsets, and a latest version of 1.0.46 (same source). The README does not document how it handles the spindle or M6 tool changes, it describes its target as Grbl 1.1, and it states no licence, so read the repository's LICENSE file before reusing it. Link to it rather than copying it into other projects.
+- **Fallback: Autodesk's own Grbl post**, chosen from Fusion's Post Library with nothing to download ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)). A user forum thread reports that Autodesk updated it to remove G-codes that Grbl does not support ([Easel forum](https://forum.easel.com/t/autodesk-just-updated-their-grbl-post-processor-to-fix-unsupported-gcodes/73243)).
+- I have not run either post on this machine, so treat your first G-code file as a test, not a trusted program.
+
+**What the personal-use version changes.** Autodesk's help lists probing, multi-axis milling, rapid moves and automatic tool changes as removed from Fusion for personal use ([Autodesk help](https://help.autodesk.com/view/fusion360/ENU/?caas=caas%2Fsfdcarticles%2Fsfdcarticles%2FFusion-360-Free-License-Changes.html)). In practice:
+
+- **No rapid moves.** Every move between cuts runs at a feed rate no higher than the cutting feed rate, and no rapid (G0) codes are posted (same source). On a small mill the extra time is usually modest, but long jobs with many separate cuts will take longer.
+- **One post per tool.** If a program uses several tools, each section has to be posted on its own (same source). With manual tool changes, that means one G-code file per tool.
+- **No probing from Fusion.** The OpenBuilds post's probing options will not apply to you.
+- That Autodesk page is dated around 2020 even though its footer shows 2026, so confirm the current limits with Autodesk.
+
+**Set it up:**
+
+1. **Download the post.** From the OpenBuilds repository, save `OpenbuildsFusion360PostGrbl.cps` into a folder you will keep, for example a folder called Fusion Posts (my suggestion). Skip this step if you are using Autodesk's Grbl post.
+2. **Open the Post Process dialog.** In Fusion's Manufacture workspace, finish your toolpaths, then click Post Process, the tool that converts the operations into a language the machine understands ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-POST-PROCESSING-OVERVIEW.htm)).
+3. **Open the Post Library.** In the NC Program dialog, open the Post list and choose Choose from Library, or click the folder icon ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-REF-NC-PROGRAM-POST-SELECTION.htm)).
+4. **Pick the post.**
+   - *Autodesk's Grbl post:* narrow the list with the Filters tab (capabilities and vendor), select the Grbl post, and drag it into your Local library folder, or use Copy and Paste ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-REF-NC-PROGRAM-POST-SELECTION.htm)).
+   - *The OpenBuilds post:* in the left panel of the Post Library, right-click the Linked folder, choose Linked Folder, select the folder holding the .cps file, then select the post in the middle panel ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-REF-NC-PROGRAM-POST-SELECTION.htm)). Autodesk also describes an Import button that adds a .cps file to the Local or Cloud library ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-ADD-POST-PROCESSOR-TO-LIBRARY.htm)).
+   - I could not confirm whether Fusion for personal use accepts a custom post, because Autodesk lists only "limited import/export file types" without detail ([Autodesk](https://www.autodesk.com/campaigns/fusion-360-personal-use-changes)). If the library refuses it, use Autodesk's own Grbl post.
+5. **Check the post properties.** Fusion shows a post's properties in the NC Program or Post Process dialog, where you can change them without editing the file ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/a-quick-introduction-to-editing-post-processors)). The OpenBuilds README names a split-on-line-count option and a lead-in feed rate setting, and its laser and plasma options are not relevant to a mill ([OpenBuilds](https://github.com/OpenBuilds/OpenBuilds-Fusion360-Postprocessor)). Read every property once, and leave alone anything you do not understand.
+6. **Post a small test first.** Use a simple shape, as Autodesk advises ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)), and give the file a clear name.
+7. **Read the file before you send it.** Open it in a text editor and check these (my checklist, not from a source): the units line matches your design (G21 is millimetres), absolute positioning is on (G90), a work offset is set (for example G54), the spindle is started (M3 with an S value) and stopped (M5) at the right points, and the S value is inside your spindle's range as set in grblHAL. Look for any tool-change lines such as M6 too.
+8. **Dry-run it in the controller.** The Grbl `$C` check mode runs the program through the parser without moving anything, which Grbl's own notes suggest for vetting a program ([Grbl interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface)). Then run it with the spindle off and the tool well above the work before cutting anything.
+
+**Tool changes on grblHAL.** grblHAL supports M6 in its core, and what happens depends on the `$341` setting. In the basic mode 0 it is fully manual and your G-code must stop the spindle and coolant itself and optionally move to a tool change position ([grblHAL wiki](https://github.com/grblHAL/core/wiki/Manual,-semi-automatic-and-automatic-tool-change)). Because the personal-use version posts one tool per file anyway, the simplest workflow is one file per tool: run a file, stop, change the tool, set the Z height again, then run the next file (my suggestion).
+
+**If the sender shows an error on a line:** the line number points into the G-code file. Open that line in a text editor and check whether the post wrote a code that Grbl-family firmware does not accept, as Autodesk's Grbl guide warns ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)).
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Check |
@@ -406,6 +441,11 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - [Batch Post add-in (Tim Paterson)](https://github.com/TimPaterson/Fusion360-Batch-Post): a third-party description of the free version's G-code limits.
 - [Using Fusion with Grbl (Autodesk)](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/), [Grbl tips](https://www.autodesk.com/products/fusion-360/blog/?p=13395) and [Post Process overview](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-POST-PROCESSING-OVERVIEW.htm): post processors and the Grbl post.
 - [Grbl v1.1 interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface): how senders stream G-code and how the controller buffers and plans it.
+- [OpenBuilds Fusion 360 postprocessor](https://github.com/OpenBuilds/OpenBuilds-Fusion360-Postprocessor): the recommended post, files and version notes.
+- [Changes to Fusion for personal use (Autodesk help)](https://help.autodesk.com/view/fusion360/ENU/?caas=caas%2Fsfdcarticles%2Fsfdcarticles%2FFusion-360-Free-License-Changes.html): no rapid moves, no automatic tool changes, one post per tool.
+- Autodesk help: [selecting a post](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-REF-NC-PROGRAM-POST-SELECTION.htm), [managing the Post Library](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-ADD-POST-PROCESSOR-TO-LIBRARY.htm) and [editing post properties](https://www.autodesk.com/products/fusion-360/blog/a-quick-introduction-to-editing-post-processors).
+- [grblHAL tool change wiki](https://github.com/grblHAL/core/wiki/Manual,-semi-automatic-and-automatic-tool-change): M6 handling and the `$341` modes.
+- [Easel forum thread on Autodesk's Grbl post update](https://forum.easel.com/t/autodesk-just-updated-their-grbl-post-processor-to-fix-unsupported-gcodes/73243): a user report, not vendor documentation.
 
 ### Licences
 
