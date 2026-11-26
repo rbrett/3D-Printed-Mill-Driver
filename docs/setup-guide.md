@@ -1,9 +1,29 @@
 # Simple CNC mill controller setup guide
-(grblHAL on a BTT SKR Pico: )
+(running grblHAL on a BTT SKR Pico)
 
 Nov 26, 2026 · Russell Brett
 
+![The SKR Pico connectors this guide uses](images/skr-pico-connectors.svg)
+
 A step-by-step guide for people who are familiar with open source 3D printers, and may well be interested in moving from additive manufacturing (3D printing) to subtractive manufacturing - milling.  This guide covers re-purposing a cheap 3D printer controller board - an SKR Pico V1.0 running grblHAL firmware, and pairing it with a Raspberry Pi for sending the Gcode.  See the github repository at <https://github.com/rbrett/3D-Printed-Mill-Driver> for updated copies of this manual, and a 3D printed milling machine design that has proven successful for engraving, and very light machining of aluminium.
+
+**Contents**
+
+- [From drawing to cut part: how the pieces fit](#from-drawing-to-cut-part-how-the-pieces-fit)
+- [Before you start: safety and words you will meet](#before-you-start-safety-and-words-you-will-meet)
+- [Architecture and parts](#architecture-and-parts)
+- [Read first: known SKR Pico risks](#read-first-known-skr-pico-risks)
+- [Step 0: Build the Raspberry Pi image and first boot](#step-0-build-the-raspberry-pi-image-and-first-boot)
+- [Step 1: Build and flash grblHAL](#step-1-build-and-flash-grblhal)
+- [Step 2: Connect, verify and reset](#step-2-connect-verify-and-reset)
+- [Step 3: Motors, current and motion settings](#step-3-motors-current-and-motion-settings)
+  - [Work out your motor wiring first](#work-out-your-motor-wiring-first)
+- [Step 4: Limit switches, probe and spindle](#step-4-limit-switches-probe-and-spindle)
+- [Step 5: Homing and soft limits](#step-5-homing-and-soft-limits)
+- [Step 6: Raspberry Pi, touchscreen and sender](#step-6-raspberry-pi-touchscreen-and-sender)
+- [Step 7: Configure Fusion to write G-code for this mill](#step-7-configure-fusion-to-write-g-code-for-this-mill)
+- [Troubleshooting](#troubleshooting)
+- [References and other supporting documentation](#references-and-other-supporting-documentation)
 
 ## From drawing to cut part: how the pieces fit
 
