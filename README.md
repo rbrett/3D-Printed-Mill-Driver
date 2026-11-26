@@ -19,7 +19,7 @@ A setup guide for people who already know 3D printers (Marlin/Klipper) and want 
 **[docs/setup-guide.md](docs/setup-guide.md)** walks through, in order:
 
 0. Building the Raspberry Pi image, first boot and installing gSender (after a short overview of the CAD, CAM and G-code process)
-1. Building and flashing grblHAL on the SKR Pico
+1. Building grblHAL in the Web Builder and flashing it onto the SKR Pico
 2. Connecting and verifying the board
 3. Working out motor wiring, then motor current, microsteps, steps/mm and motion settings
 4. Limit switches, probe and spindle
@@ -34,7 +34,7 @@ It also has a safety checklist and glossary written for teenagers and first-time
 This is a research-based guide, not a record of a finished, tested build. Parts that could not be verified are listed in the "Not verified" list in the guide's "References and other supporting documentation" section. The main ones:
 
 - The SKR Pico board map's exact pins (limits, probe, spindle PWM) were not read directly. Use the `$PINS` command and BTT's pinout PDF on your own board.
-- Whether the Web Builder offers the Trinamic (TMC2209 UART) option for this board should be confirmed after flashing: `$$` must list `$140`–`$143` and `$150`–`$153`.
+- The Web Builder shows the Trinamic driver locked to TMC2209 for this board, but the guide has not been tested on a real board. After flashing, `$$` must list `$140`–`$143` and `$150`–`$153`.
 - Powering the Pi from the board's 5 V output while USB is also connected is not confirmed safe.
 - Conservative speeds, the 0.5 A starting current and the E-stop advice are recommendations, not vendor figures.
 

@@ -164,14 +164,42 @@ Sienci says the Pi install is the least documented option and expects some Linux
 
 grblHAL is compiled per board. The Web Builder does this in 10 to 30 seconds and returns a `.uf2` for RP2040 ([grblHAL docs](https://petervanderwalt.github.io/grblhal_docs/Getting-Started/firmware-flashing)).
 
-1. Open the grblHAL Web Builder and choose driver **RP2040**, board **BTT SKR Pico**. Leave the Hotwire variant alone.
-2. Under motor/driver options, look for Trinamic (TMC2209, UART). The docs page I read does not list this option, so treat it as something to confirm: after flashing, `$$` must show `$140`–`$143` (current) and `$150`–`$153` (microsteps). If they are absent, rebuild with Trinamic enabled.
-3. Add a spindle option only if you need it (PWM spindle is the default if none is set).
-4. Generate and download the `.uf2`.
-5. Enter the bootloader. The grblHAL docs say hold BOOTSEL while plugging in USB. BTT's wiki instead describes bridging the **Boot** pins with a jumper and pressing **Reset**. Use the jumper method on this board, then remove the jumper afterwards.
-6. A drive appears (named RPI-RP2). Drag the `.uf2` onto it; the board reboots into grblHAL.
+If you are updating existing firmware, save the output of `$$` first; updates can reset settings. The Web Builder page gives this warning for updates from builds older than 20241208. To update later, repeat parts B and C with a freshly built file.
 
-If you are updating existing firmware, save the output of `$$` first; updates can reset settings.
+**A. Build the firmware in the Web Builder.** The Web Builder is one web page with no sign-in, at [svn.io-engineering.com:8443](https://svn.io-engineering.com:8443/). It calls itself "work in progress" and says the builds are verified only by people who own the boards. I read version 1.0.1 (grblHAL build 20261123) on 26 Nov 2026, so menus may have changed since.
+
+1. Leave the three optional dropdowns at the top (Machine vendor, Machine, Variant) alone. They load vendor profiles for other machines (Sienci, Ooznest, OpenBuilds and Voron when I looked), not this board.
+2. Set **Driver** to "RP2040 (Pi Pico & Pi Pico W)". The **Boards** list then fills in.
+3. Set **Boards** to "BTT SKR Pico 1.0". Do not pick the "Hotwire" variant (see "Read first"). The blue **i** beside Boards lists what the build supports for this board: up to 4 axes and 4 motors, native USB, a probe input, one PWM spindle, ModBus, and no SD card, WiFi or I2C. The page itself warns that list may be incorrect.
+4. On the **General** tab, set the options in the table below. Leave the other tabs (Plugins, Network/WebUI, Advanced features, 3rd party plugins, Optional inputs, I/O expansion) at their defaults for a first build. The page warns that 3rd party plugins may break the compile, so leave those unticked.
+5. Click **Generate and download firmware**. The grblHAL docs say this takes about 10 to 30 seconds. The page also prints your chosen options to the browser console (press F12), a handy record of exactly what you built.
+6. Save the download. I have not confirmed whether you get a bare `.uf2` or a zip: the community docs say `.uf2` for RP2040, while the core wiki says the Web Builder delivers a zip. If it is a zip, unzip it and use the `.uf2` inside.
+
+| Setting (General tab) | Choose | Why |
+| --- | --- | --- |
+| Connection | Native USB (default) | The Pi or PC talks to the board over its USB-C port. The other choice, (Virtual) UART, is a serial-header connection instead. |
+| Number of axes | 3 | X, Y and Z. The board supports 4, but the fourth driver shares pins with control inputs (issue 42, see "Read first"). |
+| X-axis, Y-axis, Z-axis | Single motor | One motor per axis. Ganged or Auto-squared is for two motors on one axis, and the board allows one such axis. |
+| Probe input | Ticked (default) | Leaves the probe input available. You can leave it unused. |
+| Trinamic drivers and mode | Greyed out: TMC2209, R sense 110 mΩ, UART soft address | Fixed by the board choice, so there is nothing to set. It should make the Trinamic settings (`$140` and up) available, which part D checks. |
+| Spindle 1 | PWM (default) | Match your spindle hardware. On/Off suits a relay-switched spindle. The VFD entries (Huanyang and others) are for spindle drives, so read the grblHAL spindle docs before using one. |
+| Spindles 2 to 4, ModBus RTU | Disabled (default) | Not needed for a basic mill. |
+
+**B. Put the board in bootloader mode.** The RP2040 has a built-in bootloader that appears on your computer as a USB drive. On the SKR Pico you enter it with a jumper and the Reset button, as BTT's manual describes ([BTT manual](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/BTT%20SKR%20Pico%20V1.0%20Instruction%20Manual.pdf), section IV; the Voron docs give the same steps). The grblHAL docs describe holding a BOOTSEL button instead, which is the plain Pico method.
+
+1. Power the board. The normal way is the 12 to 24 V DC supply with the motors disconnected, as in Step 2. To flash on USB power alone, fit the board's USB power jumper first and remove it afterwards (Voron docs).
+2. Fit a jumper cap on the two **Boot** pins.
+3. Connect a USB-C data cable from the board to the PC or Pi. A charge-only cable will not work.
+4. Press **Reset**. A drive named RPI-RP2 should appear in your file manager. BTT's manual spells it "RPI-PR2", which looks like a typo; the grblHAL docs give RPI-RP2.
+5. If no drive appears, check the cable, check the jumper sits on the Boot pins, and press Reset again.
+
+**C. Copy the firmware onto the board.**
+
+1. Drag the `.uf2` file onto the RPI-RP2 drive. On a Pi without a desktop, the drive may need mounting by hand (the Voron docs show it appearing as `/dev/sda1`).
+2. When the copy finishes, the board reboots by itself and the drive disappears (BTT's manual). A new serial port should appear; part D checks it.
+3. Unplug USB, remove the Boot jumper (and the USB power jumper if you fitted it), then press Reset or power-cycle the board (BTT's manual).
+
+**D. Check it worked.** Carry on with Step 2, which opens a terminal and reads `$I` and `$$`. Confirm that `$140` to `$143` (motor current) and `$150` to `$153` (microsteps) exist. If they are missing, re-check the Driver and Boards selections and build again.
 
 ## Step 2: Connect, verify and reset
 
@@ -181,7 +209,7 @@ Do this on the bench with the 12 to 24 V DC supply on and motors **disconnected*
 
 1. Connect USB-C to a PC. Open a serial terminal at 115200 baud, 8N1 (or use gSender's console).
 2. Send `$I`. You should see the grblHAL version and a `[BOARD:...]` line naming the SKR Pico.
-3. Send `$$` to list settings. Check that the current and microstep settings exist (step 1, item 2).
+3. Send `$$` to list settings. Check that the current and microstep settings exist (Step 1, part D).
 4. If you see odd values from a previous firmware, send `$RST=$` to restore defaults. Confirm the board still responds, then power-cycle it.
 5. Send `$PINS` to print the live pin status. Keep this output: you will use it in step 4 instead of trusting a pinout diagram.
 6. Useful: `$$=22` describes setting 22, and `$ESG` lists all settings with descriptions ([Sienci command list](https://sienci.zendesk.com/hc/en-us/articles/36094043206036-grbl-grblHAL-Useful-Commands)).
@@ -406,6 +434,9 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - [grblHAL core discussion 572](https://github.com/grblHAL/core/discussions/572).
 - [grblHAL motor plugins README](https://github.com/grblHAL/Plugins_motor/blob/master/README.md): Trinamic driver support.
 - [Firmware flashing docs](https://petervanderwalt.github.io/grblhal_docs/Getting-Started/firmware-flashing) (full) and [settings reference](https://petervanderwalt.github.io/grblhal_docs/Reference/complete-settings-reference): community-hosted mirror of the grblHAL documentation, not the official wiki.
+- [grblHAL Web Builder](https://svn.io-engineering.com:8443/) (viewed 26 Nov 2026, v1.0.1, build 20261123) and the grblHAL [Compiling grblHAL wiki page](https://github.com/grblHAL/core/wiki/Compiling-grblHAL): the page and flashing notes that Step 1 walks through.
+- [BTT SKR Pico V1.0 Instruction Manual](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/BTT%20SKR%20Pico%20V1.0%20Instruction%20Manual.pdf) (full, linked not copied): the Boot jumper and Reset button flashing procedure.
+- [Voron docs, SKR Pico Klipper firmware](https://docs.vorondesign.com/build/software/skrPico_klipper.html): the same bootloader steps from a second source, including the USB power jumper.
 - [Sienci grbl/grblHAL useful commands](https://sienci.zendesk.com/hc/en-us/articles/36094043206036-grbl-grblHAL-Useful-Commands): `$$=n`, `$ESG`, `$EAG`, `$X`.
 
 ### Worked example
@@ -454,9 +485,10 @@ Every source used to put this guide together is listed here. Pages marked (full)
 ### Not verified: check before relying on them
 
 - The SKR Pico board map's exact pins for limits, probe and spindle PWM. Use `$PINS` and BTT's pinout PDF.
-- Whether the current Web Builder offers a Trinamic option for this board. The docs page did not mention it; settings `$140` and up are evidenced by the build guide and issue 42.
+- Whether the flashed firmware exposes the Trinamic settings. The Web Builder shows the Trinamic driver field locked to TMC2209 for this board (seen 26 Nov 2026), but I did not build or flash it; settings `$140` and up are evidenced by the build guide and issue 42.
 - Whether powering the Pi from the board's 5 V and USB together is safe.
 - bCNC install steps on a current Pi OS; there is only the one 2021 report above.
 - The `$PINS`, `$C`, `$X` and `$H` behaviour comes from community-hosted docs and standard Grbl convention. Confirm with `$$=n` and `$ESG` on your firmware build.
 - The licences of the RP2040 driver and bCNC, and the grblHAL core licence (seen only on a mirror). Read each upstream licence file before reusing its code.
+- The Step 1 Web Builder walkthrough comes from reading the live page on 26 Nov 2026 (v1.0.1) without generating a build. I have not flashed this board. Whether the download is a bare `.uf2` or a zip is unconfirmed, and the bootloader steps come from BTT's manual and the Voron docs.
 - Current limit and safety-engineering choices (E-stop, conservative speeds, 0.5 A start) and the power-supply checks are my recommendations, not vendor figures.
