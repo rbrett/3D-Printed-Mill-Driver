@@ -2,6 +2,42 @@
 
 *Written 26 Nov 2026.* A step-by-step guide for people who know Marlin/Klipper printers, covering an SKR Pico V1.0 running grblHAL with a Raspberry Pi sender.
 
+## From drawing to cut part: how the pieces fit
+
+A CNC mill makes a part through a chain of hand-offs. Each stage hands a file or a stream to the next, so knowing which stage does which job makes faults much easier to find. This guide builds stages 4 to 6; stages 1 to 3 happen in your CAD and CAM software.
+
+```mermaid
+flowchart LR
+  subgraph design["Design computer"]
+    direction LR
+    CAD["1. CAD<br/>draw the part in Fusion"] --> CAM["2. CAM<br/>plan the cuts and tools"] --> GC["3. G-code<br/>post-process to a file"]
+  end
+  subgraph sender["Pi or any PC"]
+    SND["4 and 5. Sender<br/>streams G-code line by line"]
+  end
+  subgraph machine["The machine"]
+    direction LR
+    CTL["6. Controller<br/>plans motion, drives motors"] --> MILL["Mill<br/>cuts the part"]
+  end
+  GC -->|"copy the file"| SND --> CTL
+```
+
+The G-code file is copied to wherever the sender runs. If the sender runs on the design computer, no copy is needed.
+
+1. **CAD: draw the part.** You model the part on screen. This guide's example is Autodesk Fusion, which has a free version for personal use, aimed at hobbyists and people making under US$1,000 a year from their work ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-for-personal-use-vs-autodesk-fusion/), [terms](https://www.autodesk.com/campaigns/fusion-360-personal-use-changes)). **Check before you plan around a browser:** I could not confirm that the personal-use version runs in a web browser. Autodesk's help says access to the Fusion web client is not included with personal-use or trial versions ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-GetStarted/files/FT-WEB-CLIENT.htm)). A separate partner article describes a browser version with the full toolset, but its list of eligible licences names commercial, startup and education users and does not mention personal use ([Arkance](https://ukcommunity.arkance.world/hc/en-us/articles/35549401706642-How-to-use-Autodesk-Fusion-directly-in-your-web-browser)). Until you have checked with Autodesk, plan on the desktop app for Windows or macOS. Any CAD and CAM package that can output Grbl-style G-code follows the same process (my note).
+2. **CAM: plan the cuts.** CAD holds the shape; CAM decides how to cut it: the stock, the tools, the speeds and the toolpaths. Autodesk lists "limited CAM functionality" and "limited import/export file types" for the personal-use version without saying which ([Autodesk](https://www.autodesk.com/campaigns/fusion-360-personal-use-changes)). A third-party add-in author states that the free version does not support tool changes and slows all moves to feed rate ([Batch Post add-in](https://github.com/TimPaterson/Fusion360-Batch-Post)). I have not verified whether that still holds, so check Autodesk's current limits before relying on rapid moves or tool changes.
+3. **Post-process: write the G-code.** A post processor converts the toolpaths into G-code for one particular type of machine ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)). Fusion ships with generic posts and has an online library of more ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-POST-PROCESSING-OVERVIEW.htm)). Choose the Grbl post, since grblHAL speaks Grbl-style G-code, and test with a simple shape first, as Autodesk advises ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/?p=13395)). The result is a plain text file. Read it before you run it: check the spindle and tool-change lines match how you run the machine (my note).
+4. **Copy the G-code to the machine that runs the sender.** Move the file by USB stick, network share or any other file transfer to the Pi (or whichever computer runs gSender). If the sender runs on the same PC as Fusion, there is nothing to copy. Then open the file in the sender.
+5. **Sender: stream the file.** A common idea is that the sender converts G-code into something the firmware understands. It does not: grblHAL already reads G-code, so the sender's jobs are to feed the file to the controller one line at a time, read the replies, and give you live controls such as jog, hold and overrides. In Grbl's documented protocol the controller answers each line with ok or an error, and the sender either waits for every reply or counts characters so the controller's buffers stay full ([Grbl interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface)). Real-time commands such as feed hold and status requests are picked out as they arrive and act immediately, not in the queue (same source). Those notes describe Grbl 1.1, and grblHAL is built from the same family but I have not checked its buffer sizes. If the stream cannot keep the planning buffer full, motion turns stop-start (same source), which is one reason the sender computer should not be struggling.
+6. **Controller: turn lines into motion.** The SKR Pico running grblHAL does the time-critical work. Grbl is described as software that converts G-code into machine motion ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)). It parses each line, plans moves ahead so it can accelerate and slow down smoothly ([Grbl interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface)), and pulses the stepper drivers, which move the NEMA 17 motors. It also handles homing, limit switches and alarms, covered in Steps 4 and 5 below.
+
+**Where to look when something is wrong** (my guidance, using the stages above):
+
+- Wrong shape or size: CAD or CAM, before any G-code exists.
+- A line is rejected with an error reply: the G-code or post processor, so read that line ([Grbl interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface)).
+- Jerky, stop-start motion: how the stream is feeding the controller, so check the sender computer.
+- Motors do not move, or move the wrong way: the controller settings and the motor wiring, Steps 2 and 3 below.
+
 ## Before you start: safety and words you will meet
 
 This project mixes electronics, power supplies and a machine with a spinning cutter. If you are under 18, do it with an adult or teacher who can supervise. These are general workshop rules, not figures from the sources below.
@@ -362,6 +398,14 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - [Sciencing: How to wire a stepper motor](https://www.sciencing.com/wire-stepper-motor-4738199): centre-tap resistance on six-wire motors.
 - Duet3D forum threads: [wiring of stepper motors](https://forum.duet3d.com/post/276271), [reversing direction](https://forum.duet3d.com/post/276267), [colour codes](https://forum.duet3d.com/post/286023), [killing a driver](https://forum.duet3d.com/post/322741) and [hot-plugging](https://forum.duet3d.com/post/322757). These are community posts, not vendor documentation.
 - [V1 Engineering forum: SKR 1.3 TMC2209](https://forum.v1engineering.com/t/skr-1-3-tmc2209-issues-with-setting-vref/23810) and [Tinkered TMC2209 page](https://tinkered.ai/components/tmc2209-stepper-driver): disconnecting motors while powered, and TMC2209 output pin names.
+
+### CAD, CAM and G-code workflow
+
+- [Fusion for personal use (Autodesk blog)](https://www.autodesk.com/products/fusion-360/blog/fusion-for-personal-use-vs-autodesk-fusion/) and [personal-use terms and limits](https://www.autodesk.com/campaigns/fusion-360-personal-use-changes): who qualifies and the stated limits.
+- [Fusion web client (Autodesk help)](https://help.autodesk.com/cloudhelp/ENU/Fusion-GetStarted/files/FT-WEB-CLIENT.htm) and [Fusion in a web browser (Arkance)](https://ukcommunity.arkance.world/hc/en-us/articles/35549401706642-How-to-use-Autodesk-Fusion-directly-in-your-web-browser): browser access and which licences it covers.
+- [Batch Post add-in (Tim Paterson)](https://github.com/TimPaterson/Fusion360-Batch-Post): a third-party description of the free version's G-code limits.
+- [Using Fusion with Grbl (Autodesk)](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/), [Grbl tips](https://www.autodesk.com/products/fusion-360/blog/?p=13395) and [Post Process overview](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-POST-PROCESSING-OVERVIEW.htm): post processors and the Grbl post.
+- [Grbl v1.1 interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface): how senders stream G-code and how the controller buffers and plans it.
 
 ### Licences
 
