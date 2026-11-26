@@ -156,6 +156,49 @@ If the board does not answer, send Ctrl+X (soft reset) and recheck port and baud
 
 **In plain English:** a stepper moves in tiny fixed steps. The driver decides how hard to push (current) and how finely to divide each step (microsteps). Too little current and the motor skips steps and loses its place; too much and the motor and driver get hot. "Steps per mm" is how many pulses move the axis exactly 1 mm, so the board knows that `G1 X10` means 10 mm. Change one setting at a time, test it, then move on, as you would tuning a 3D printer.
 
+### Work out your motor wiring first
+
+**Why this step exists.** A NEMA 17 has two coils, so four wires. The driver expects both wires of one coil on one output pair and both wires of the other coil on the other pair. A Duet forum reply calls connecting stepper wires to the wrong pins the easiest way to kill a driver ([Duet forum](https://forum.duet3d.com/post/322741)), and the SKR Pico's drivers are soldered on, so a dead one means a new board. A motor whose coils are mixed up typically just vibrates and does not turn ([Duet forum](https://forum.duet3d.com/post/276271)).
+
+**The catch on this board.** BTT's pinout labels each motor connector, in order, 2B, 1B, 1A, 2A ([BTT pinout PDF](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/Hardware/BTT%20SKR%20Pico%20V1.0-PIN.pdf)). TMC2209 outputs are named M1A and M1B for one coil and M2A and M2B for the other ([Tinkered](https://tinkered.ai/components/tmc2209-stepper-driver)). From those names, one coil sits on the two outer pins (2B and 2A) and the other on the two middle pins (1B and 1A). That is my reading of the labels, not a BTT statement, so confirm it with the tests below. Many motors and cables put each coil's wires side by side, for example black and green, then red and blue ([applied-ee](https://applied-ee.github.io/embedded/docs/motor-control/stepper-motors/stepper-types-and-wiring/)). Plugged straight in, that puts mismatched wires on each pair. This is the likely reason some imported motors needed re-pinning.
+
+```mermaid
+flowchart TB
+  subgraph supplied["Motor wires as supplied (example)"]
+    direction LR
+    W1["A"] ~~~ W2["A'"] ~~~ W3["B"] ~~~ W4["B'"]
+  end
+  subgraph pico["SKR Pico connector, pin order from BTT PDF"]
+    direction LR
+    P1["2B = A"] ~~~ P2["1B = B"] ~~~ P3["1A = B'"] ~~~ P4["2A = A'"]
+  end
+  supplied -->|"re-pin the board end"| pico
+```
+
+In the example, coil A is the wire pair A and A', and coil B is B and B'. On the connector, coil A takes the outer pins (2B and 2A) and coil B takes the middle pins (1B and 1A). The diagram is a worked example only; find your own motor's two coils by testing first.
+
+**Do not trust wire colours.** They differ between makers, and Duet forum regulars advise identifying the windings by testing instead ([Duet forum](https://forum.duet3d.com/post/286023)).
+
+**A. Find the two coils** (motor unplugged, nothing powered):
+
+1. **Multimeter, resistance mode.** Pick one wire and measure it against each of the other three. One reading is low (typically 1 to 10 Ω) and is its coil partner; the other two read open ([applied-ee](https://applied-ee.github.io/embedded/docs/motor-control/stepper-motors/stepper-types-and-wiring/), [SparkFun](https://learn.sparkfun.com/tutorials/big-easy-driver-hookup-guide/hardware-hookup)). The remaining two wires should also read low to each other.
+2. **Label each pair with tape straight away**, for example coil A and coil B, so you do not lose track ([RatRig](https://wiki.ratrig.com/build-guides/mill-wiring)).
+3. **No meter?** Join two wires with a paperclip and turn the shaft by hand. If it gets harder to turn, those two wires are one coil ([MatterHackers](https://forums.matterhackers.com/post/70?page=1)). An LED across two wires lights as you spin the shaft if they are a pair ([RepRap wiki](https://reprap.org/wiki/Stepper_wiring)).
+4. **More than four wires?** A six-wire motor has a centre tap on each coil; the centre tap reads half the end-to-end resistance ([Sciencing](https://www.sciencing.com/wire-stepper-motor-4738199)). Use only the two end wires of each coil and leave the centre taps unconnected (my engineering note). Five-wire motors do not work with standard stepper electronics ([RepRap wiki](https://reprap.org/wiki/Stepper_wiring)).
+
+**B. Re-pin the board-end connector** (board powered off and USB unplugged):
+
+1. Put one coil's two wires on the outer pins (2B and 2A) and the other coil's two wires on the middle pins (1B and 1A).
+2. Which wire of a coil goes on which of its two pins only decides the direction the motor turns, not whether it runs ([RepRap wiki](https://reprap.org/wiki/Stepper_wiring)). So you can fix direction later by swapping one coil's two wires.
+3. Worked example (not your motor's colours): a cable in the order A, A', B, B' becomes A, B, B', A' on pins 2B, 1B, 1A, 2A. In practice that means moving the last wire of coil A to the far end.
+4. To move a crimped pin, MatterHackers describes lifting the connector's black retaining tab with a small flat-head screwdriver, sliding the pin out the back, and pushing it back in with its ledge aligned to the tab ([MatterHackers](https://help.matterhackers.com/article/290-e3d-hemera-stepper-motor-wiring-correction)). That article is about a Dupont-style connector. I have not verified which housing your motor leads use, so check yours. Change the board-end connector only, and leave the motor-end plug alone, as MatterHackers advises.
+
+**C. Check before powering up.** With the motor plugged into its connector and the board off, measure at the connector: pins 1 and 4 should read a low resistance, pins 2 and 3 should read a low resistance, and pin 1 to pin 2 should read open (my check, from the pairing rule above). Then continue with the settings below, starting at a low current.
+
+- **Vibrates or buzzes but does not turn:** power off and re-test the pairs, because coils are mixed ([Duet forum](https://forum.duet3d.com/post/276271)).
+- **Turns the wrong way:** swap the two wires of one coil ([Duet forum](https://forum.duet3d.com/post/276267)), or invert that axis in `$3` (see Verify direction below).
+- **Never plug or unplug a motor while the board is powered.** Duet's forum describes it as well known and warned against ([Duet forum](https://forum.duet3d.com/post/322757)), and a V1 Engineering forum reply says the same ([V1 Engineering](https://forum.v1engineering.com/t/skr-1-3-tmc2209-issues-with-setting-vref/23810)).
+
 In grblHAL the Marlin `M906` and `M92` jobs are settings: send `$140=800` and press Enter, as in a terminal. Settings are only applied once the line is submitted ([RC Keith build guide](https://rckeith.co.uk/electronics-build-guide-btt-skr-pico/)).
 
 | Setting | What it does | Starting point |
@@ -290,6 +333,17 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - [Getting started](https://www.raspberrypi.com/documentation/computers/getting-started.html), [Imager](https://www.raspberrypi.com/documentation/computers/imager.html) and [remote access](https://www.raspberrypi.com/documentation/computers/remote-access.html) documentation.
 - [Raspberry Pi Imager download](https://www.raspberrypi.com/software/), [Imager announcement](https://www.raspberrypi.com/news/a-new-raspberry-pi-imager/) and the [kiosk-mode tutorial](https://www.raspberrypi.com/tutorials/how-to-use-a-raspberry-pi-in-kiosk-mode/).
 - [Raspberry Pi forum thread on hostnames in Imager](https://forums.raspberrypi.com/viewtopic.php?t=394644) (one user's report).
+
+### Stepper motor wiring
+
+- [Stepper Types and Wiring (applied-ee)](https://applied-ee.github.io/embedded/docs/motor-control/stepper-motors/stepper-types-and-wiring/): resistance and shaft-spin tests for finding coil pairs.
+- [SparkFun Big Easy Driver hookup guide](https://learn.sparkfun.com/tutorials/big-easy-driver-hookup-guide/hardware-hookup): finding coil pairs without a datasheet.
+- [RepRap wiki: Stepper wiring](https://reprap.org/wiki/Stepper_wiring): pairing methods, direction reversal, five-wire motors.
+- [RatRig mill wiring](https://wiki.ratrig.com/build-guides/mill-wiring): continuity method and labelling the pairs.
+- [MatterHackers forum: Finding the coils](https://forums.matterhackers.com/post/70?page=1) and [Hemera wiring correction](https://help.matterhackers.com/article/290-e3d-hemera-stepper-motor-wiring-correction): shaft test and moving connector pins.
+- [Sciencing: How to wire a stepper motor](https://www.sciencing.com/wire-stepper-motor-4738199): centre-tap resistance on six-wire motors.
+- Duet3D forum threads: [wiring of stepper motors](https://forum.duet3d.com/post/276271), [reversing direction](https://forum.duet3d.com/post/276267), [colour codes](https://forum.duet3d.com/post/286023), [killing a driver](https://forum.duet3d.com/post/322741) and [hot-plugging](https://forum.duet3d.com/post/322757). These are community posts, not vendor documentation.
+- [V1 Engineering forum: SKR 1.3 TMC2209](https://forum.v1engineering.com/t/skr-1-3-tmc2209-issues-with-setting-vref/23810) and [Tinkered TMC2209 page](https://tinkered.ai/components/tmc2209-stepper-driver): disconnecting motors while powered, and TMC2209 output pin names.
 
 ### Licences
 

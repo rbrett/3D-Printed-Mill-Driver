@@ -21,7 +21,7 @@ A setup guide for people who already know 3D printers (Marlin/Klipper) and want 
 0. Building the Raspberry Pi image, first boot and installing gSender
 1. Building and flashing grblHAL on the SKR Pico
 2. Connecting and verifying the board
-3. Motor current, microsteps, steps/mm and motion settings
+3. Working out motor wiring, then motor current, microsteps, steps/mm and motion settings
 4. Limit switches, probe and spindle
 5. Homing and soft limits
 6. Pi, touchscreen and sender setup
