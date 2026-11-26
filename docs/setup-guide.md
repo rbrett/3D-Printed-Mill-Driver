@@ -209,6 +209,10 @@ If you are updating existing firmware, save the output of `$$` first; updates ca
 
 **B. Put the board in bootloader mode.** The RP2040 has a built-in bootloader that appears on your computer as a USB drive. On the SKR Pico you enter it with a jumper and the Reset button, as BTT's manual describes ([BTT manual](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/BTT%20SKR%20Pico%20V1.0%20Instruction%20Manual.pdf), section IV; the Voron docs give the same steps). The grblHAL docs describe holding a BOOTSEL button instead, which is the plain Pico method.
 
+![SKR Pico V1.0 with the USB power jumper, the Boot jumper pins and the Reset button marked in red](images/skr-pico-boot-reset-usbpower.png)
+
+The red boxes mark the three parts used below: the **USB Power** jumper (top right, beside the USB-C socket), the **Boot** jumper pins (centre) and the **Reset** button (lower left). Picture supplied by the guide's author; the red labels are theirs.
+
 1. Power the board. The normal way is the 12 to 24 V DC supply with the motors disconnected, as in Step 2. To flash on USB power alone, fit the board's USB power jumper first and remove it afterwards (Voron docs).
 2. Fit a jumper cap on the two **Boot** pins.
 3. Connect a USB-C data cable from the board to the PC or Pi. A charge-only cable will not work.
