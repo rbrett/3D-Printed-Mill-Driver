@@ -423,20 +423,26 @@ Power the Pi from its own supply while you commission, until you have read BTT's
 
 ## New and emerging open source CAD and CAM options
 
-**Stay with Fusion for now.** Two new open source projects aim at parts of the same job, but both are very young and changing fast. The author's note at the time of writing is that they are only weeks old (I could not confirm release dates). For a stable experience, keep using Fusion, and check back every few months to reassess.
+**Stay with Fusion for now.** Fusion does two separate jobs in one program, and these two new open source tools split them: SOLIDcraft designs the 3D model (CAD) and CamCraft turns that model into G-code (CAM). To replace Fusion you would need both. Both are very young and changing fast, and the author's note at the time of writing is that they are only weeks old (I could not confirm release dates). For a stable experience, keep using Fusion, and check back every few months to reassess.
 
-| | [CamCraft](https://neotech.github.io/Camcraft/) | [SOLIDcraft](https://github.com/tangency-labs/solidcraft/) |
+**Which tool does which job**
+
+- **Design the part (CAD): SOLIDcraft.** You draw and edit the 3D model here. It makes model files, not G-code. Its README lists STEP, IGES, 3MF, STL, OBJ and glTF as formats it reads and writes where supported.
+- **Make the toolpaths and G-code (CAM): CamCraft.** It imports a 3D model, then you set the stock, work offset, tools and operations, and it posts G-code through a post processor. It does not design the part. Its machines guide lists a grblHAL post.
+- **The hand-off.** SOLIDcraft saves a model file, CamCraft opens it, CamCraft posts G-code, and gSender sends it to the mill. This is the same order as Fusion's Design and Manufacture workspaces. I have not confirmed which file formats CamCraft can import, so check that a format SOLIDcraft exports is on its import list before you rely on the pair.
+
+|  | [CamCraft](https://neotech.github.io/Camcraft/) | [SOLIDcraft](https://github.com/tangency-labs/solidcraft/) |
 | --- | --- | --- |
 | What it is | CAM: import a 3D model, define the stock, work offset and tools, add operations, then post G-code for a mill or lathe | Parametric 3D CAD built in Rust; also a headless command-line tool and an MCP server for AI agents |
-| Replaces in this guide | The CAM and post-processing stages (Fusion's job in Step 7) | The 3D modelling half of Fusion's job. The page I read does not mention CAM or G-code |
+| Replaces in this guide | The CAM and post-processing stages (Fusion's job in Step 7) | The 3D modelling half of Fusion's job. |
 | Licence | Apache-2.0 | MIT or Apache-2.0 |
 | Platforms | Windows, Linux, macOS desktop builds; a browser version that its docs say is not suitable for real work | Windows, macOS (Apple silicon and Intel), Linux (AppImage and Snap); a browser version |
 | Version seen | 0.26.0, pre-1.0 | Not stated on the page I read (its update notes mention 0.11 to 0.14) |
-| Files | Not stated on the page I read | Not stated on the page I read |
+| Files | Not stated on the page I read | STEP, IGES, 3MF, STL, OBJ and glTF in and out where supported (per its README) |
 | Standout feature | Checks every toolpath against the part, stock, fixtures and machine, and refuses to post G-code it cannot show is safe | Headless command-line tool and an MCP server, so AI agents can drive it |
-| Grbl or grblHAL | The page I read does not mention Grbl or a post processor | The page I read does not mention CAM, G-code or Grbl |
+| Grbl or grblHAL | Grbl post processors are available, or planned to be in the roadmap. |  |
 
-**What this means for your mill.** CamCraft could one day replace Fusion's CAM stage, but nothing I read says it has a Grbl or grblHAL post, so do not assume its G-code suits this controller. Its docs say every posted program is a first draft: check it in simulation, then dry-run it with the spindle off and Z raised. SOLIDcraft is a different kind of tool: a parametric 3D CAD app, so it could one day replace Fusion's modelling half, not its CAM half. I could not confirm which 3D file formats it exports, and that decides whether CamCraft or Fusion can read its models.
+**What this means for your mill.** CamCraft could one day replace Fusion's CAM stage. Its docs say every posted program is a first draft: check it in simulation, then dry-run it with the spindle off and Z raised. SOLIDcraft covers the other half, the modelling. It makes no G-code, so it cannot replace Fusion on its own, and the two work together only if CamCraft can import what SOLIDcraft exports.
 
 **Installing them.** The suggested route is [CraftLauncher](https://github.com/EricVogt93/artcraft-launcher) (repository `artcraft-launcher`), a native desktop app by Eric Vogt for installing, launching and updating apps in the ArtCraft family, with builds for Linux, Windows, macOS and FreeBSD. Three cautions from its README:
 
@@ -450,7 +456,7 @@ If a package does not appear in the launcher, use the direct routes: CamCraft's 
 
 1. Keep the Fusion route in Step 7 as your working setup.
 2. Post a small test part from CamCraft and compare its G-code with Fusion's for the same part, using the read-the-file checklist in Step 7. Then run it in check mode (`$C`) and dry-run with the spindle off and Z raised.
-3. Every few months, look again at three things: the version number, whether a Grbl or grblHAL post exists, and the release notes.
+3. Every few months, look again at three things: the version number, the state of the grblHAL post, and the release notes.
 
 **Older open source options.** FreeCAD has a CAM workbench, which its wiki says has a development roadmap ([FreeCAD wiki](https://wiki.freecad.org/CAM_Development_Roadmap)). I have not tested it against this controller.
 
@@ -553,4 +559,4 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - The licences of the RP2040 driver and bCNC, and the grblHAL core licence (seen only on a mirror). Read each upstream licence file before reusing its code.
 - Current limit and safety-engineering choices (E-stop, conservative speeds, 0.5 A start) and the power-supply checks are my recommendations, not vendor figures.
 - The Step 1 Web Builder walkthrough comes from reading the live page on 26 Nov 2026 (v1.0.1) without generating a build. I have not flashed this board. Whether the download is a bare `.uf2` or a zip is unconfirmed, and the bootloader steps come from BTT's manual and the Voron docs.
-- The CamCraft, SOLIDcraft and CraftLauncher notes come from each project's front page or README on 26 Nov 2026. I could not confirm how new these projects are, whether CamCraft has a Grbl or grblHAL post, whether CraftLauncher lists CamCraft or SOLIDcraft, which 3D file formats SOLIDcraft exports, or whether it is connected to ArtCraft (its page does not mention it). I have not installed or run any of them.
+- The CamCraft, SOLIDcraft and CraftLauncher notes come from each project's front page or README on 26 Nov 2026, and the CamCraft grblHAL post from its [machines guide](https://neotech.github.io/Camcraft/guide/check-and-post/machines/). I could not confirm how new these projects are, whether CamCraft's grblHAL post suits a mill with this controller's settings (the page pairs it with the Sienci AltMill machines and a generic 3-axis file), whether CraftLauncher lists CamCraft or SOLIDcraft, which of SOLIDcraft's export formats CamCraft can import, or whether SOLIDcraft is connected to ArtCraft (its page does not mention it). I have not installed or run any of them.
