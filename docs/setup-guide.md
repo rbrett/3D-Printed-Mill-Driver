@@ -1,6 +1,9 @@
-# grblHAL on BTT SKR Pico: CNC mill controller setup guide
+# Simple CNC mill controller setup guide
+(grblHAL on a BTT SKR Pico: )
 
-*Written 26 Nov 2026.* A step-by-step guide for people who know Marlin/Klipper printers, covering an SKR Pico V1.0 running grblHAL with a Raspberry Pi sender.
+Nov 26, 2026 · Russell Brett
+
+A step-by-step guide for people who are familiar with open source 3D printers, and may well be interested in moving from additive manufacturing (3D printing) to subtractive manufacturing - milling.  This guide covers re-purposing a cheap 3D printer controller board - an SKR Pico V1.0 running grblHAL firmware, and pairing it with a Raspberry Pi for sending the Gcode.  See the github repository at <https://github.com/rbrett/3D-Printed-Mill-Driver> for updated copies of this manual, and a 3D printed milling machine design that has proven successful for engraving, and very light machining of aluminium.
 
 ## From drawing to cut part: how the pieces fit
 
@@ -22,12 +25,10 @@ flowchart LR
   GC -->|"copy the file"| SND --> CTL
 ```
 
-The G-code file is copied to wherever the sender runs. If the sender runs on the design computer, no copy is needed.
-
-1. **CAD: draw the part.** You model the part on screen. This guide's example is Autodesk Fusion, which has a free version for personal use, aimed at hobbyists and people making under US$1,000 a year from their work ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-for-personal-use-vs-autodesk-fusion/), [terms](https://www.autodesk.com/campaigns/fusion-360-personal-use-changes)). **Check before you plan around a browser:** I could not confirm that the personal-use version runs in a web browser. Autodesk's help says access to the Fusion web client is not included with personal-use or trial versions ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-GetStarted/files/FT-WEB-CLIENT.htm)). A separate partner article describes a browser version with the full toolset, but its list of eligible licences names commercial, startup and education users and does not mention personal use ([Arkance](https://ukcommunity.arkance.world/hc/en-us/articles/35549401706642-How-to-use-Autodesk-Fusion-directly-in-your-web-browser)). Until you have checked with Autodesk, plan on the desktop app for Windows or macOS. Any CAD and CAM package that can output Grbl-style G-code follows the same process (my note).
-2. **CAM: plan the cuts.** CAD holds the shape; CAM decides how to cut it: the stock, the tools, the speeds and the toolpaths. Autodesk lists "limited CAM functionality" and "limited import/export file types" for the personal-use version without saying which ([Autodesk](https://www.autodesk.com/campaigns/fusion-360-personal-use-changes)). A third-party add-in author states that the free version does not support tool changes and slows all moves to feed rate ([Batch Post add-in](https://github.com/TimPaterson/Fusion360-Batch-Post)). I have not verified whether that still holds, so check Autodesk's current limits before relying on rapid moves or tool changes.
-3. **Post-process: write the G-code.** A post processor converts the toolpaths into G-code for one particular type of machine ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)). Fusion ships with generic posts and has an online library of more ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-POST-PROCESSING-OVERVIEW.htm)). Choose the Grbl post, since grblHAL speaks Grbl-style G-code, and test with a simple shape first, as Autodesk advises ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/?p=13395)). The result is a plain text file. Read it before you run it: check the spindle and tool-change lines match how you run the machine (my note).
-4. **Copy the G-code to the machine that runs the sender.** Move the file by USB stick, network share or any other file transfer to the Pi (or whichever computer runs gSender). If the sender runs on the same PC as Fusion, there is nothing to copy. Then open the file in the sender.
+1. **CAD: draw the part.** You model the part on screen. This guide's example is Autodesk Fusion, which has a free version for personal use, aimed at hobbyists and people making under US$1,000 a year from their work ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-for-personal-use-vs-autodesk-fusion/), [terms](https://www.autodesk.com/campaigns/fusion-360-personal-use-changes)). **Fusion works on Windows or macOS machines only.  **For Linux users, Any CAD and CAM package that can output Grbl-style G-code follows the same process.
+2. **CAM: plan the cuts.** CAD holds the shape; CAM decides how to cut it: the stock, the tools, the speeds and the tool-paths.   The hobbyist version of Fusion360 has "limited CAM functionality" and "limited import/export file types" for the personal-use version, however the type of milling machine we are building here is "limited"  compared with industrial machines, and won't present us a problem, with the main differences being speed of rapid movements, and lack of tool changes - nothing that will affect our use with these little machines.
+3. **Post-process: write the G-code.** A post processor converts the toolpaths into G-code for one particular type of machine ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)). Fusion ships with generic posts and has an online library of more ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-POST-PROCESSING-OVERVIEW.htm)). Choose the Grbl post, since grblHAL speaks Grbl-style G-code, and test with a simple shape first, as Autodesk advises ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/?p=13395)). The result is a plain text file. Read it before you run it: check the spindle and tool-change lines match how you run the machine.
+4. **Copy the G-code to the machine that runs the sender.** Move the file by USB stick, network share or any other file transfer to the Pi (or whichever computer runs gSender). If the sender runs on the same PC as Fusion, there is nothing to copy.   Open the file in the sender program (gSender or bCNC).
 5. **Sender: stream the file.** A common idea is that the sender converts G-code into something the firmware understands. It does not: grblHAL already reads G-code, so the sender's jobs are to feed the file to the controller one line at a time, read the replies, and give you live controls such as jog, hold and overrides. In Grbl's documented protocol the controller answers each line with ok or an error, and the sender either waits for every reply or counts characters so the controller's buffers stay full ([Grbl interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface)). Real-time commands such as feed hold and status requests are picked out as they arrive and act immediately, not in the queue (same source). Those notes describe Grbl 1.1, and grblHAL is built from the same family but I have not checked its buffer sizes. If the stream cannot keep the planning buffer full, motion turns stop-start (same source), which is one reason the sender computer should not be struggling.
 6. **Controller: turn lines into motion.** The SKR Pico running grblHAL does the time-critical work. Grbl is described as software that converts G-code into machine motion ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)). It parses each line, plans moves ahead so it can accelerate and slow down smoothly ([Grbl interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface)), and pulses the stepper drivers, which move the NEMA 17 motors. It also handles homing, limit switches and alarms, covered in Steps 4 and 5 below.
 
@@ -89,7 +90,7 @@ flowchart LR
   PS["Probe and spindle (optional)<br/>find pins with $PINS first"] -.-> PICO
 ```
 
-The Pi and its touchscreen are one unit; a single USB-C cable carries all G-code and status between the Pi and the Pico. Steppers, limit switches and power wire straight to the Pico; dashed lines are optional or alternatives. Pin names are deliberately not shown: confirm them on your own board with `$PINS` and [BTT's pinout PDF](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/Hardware/BTT%20SKR%20Pico%20V1.0-PIN.pdf).
+The Pi and its touchscreen are one unit; a single USB-C cable carries all G-code and status between the Pi and the Pico. Steppers, limit switches and power wire straight to the Pico; the dashed items are optional or alternatives.
 
 | Part | Notes |
 | --- | --- |
@@ -239,8 +240,6 @@ flowchart TB
   supplied -->|"re-pin the board end"| pico
 ```
 
-In the example, coil A is the wire pair A and A', and coil B is B and B'. On the connector, coil A takes the outer pins (2B and 2A) and coil B takes the middle pins (1B and 1A). The diagram is a worked example only; find your own motor's two coils by testing first.
-
 **Do not trust wire colours.** They differ between makers, and Duet forum regulars advise identifying the windings by testing instead ([Duet forum](https://forum.duet3d.com/post/286023)).
 
 **A typical motor, and the one swap.** A common 4-wire NEMA 17 pairs black with green for one coil and red with blue for the other ([applied-ee](https://applied-ee.github.io/embedded/docs/motor-control/stepper-motors/stepper-types-and-wiring/)). If a cable runs in the order black, green, red, blue, the pairs are side by side. The diagram shows that case: swapping the wires in pins 2 and 4 (green and blue) puts black and green on the outer pins and blue and red on the middle pins, which is what the connector needs. The motor may then turn the opposite way; part C below says how to fix that. This is my own working-out from the connector labels, so test before you trust it, and note that a motor with a different pairing needs a different swap. The rule to apply is always the same: one coil outer, the other coil in the middle.
@@ -295,7 +294,7 @@ In grblHAL the Marlin `M906` and `M92` jobs are settings: send `$140=800` and pr
 | `$1` | Step idle delay, ms; 255 keeps motors always on | See the start-up current note |
 | `$22` | Homing cycle | Keep at 0 until directions are verified (step 5) |
 
-`$338` is the Trinamic driver enable mask (X=1, Y=2, Z=4); `$14x` and `$15x` only work through the Trinamic plugin ([grblHAL motor plugins](https://github.com/grblHAL/Plugins_motor/blob/master/README.md)). On an early SKR Pico map, the reporter had to send `$338=15` to enable the drivers, until a board-map change removed the need; see the SKR Pico board map thread ([issue 42](https://github.com/grblHAL/RP2040/issues/42)).
+`$338` is the Trinamic driver enable mask (X=1, Y=2, Z=4); `$14x` and `$15x` only work through the Trinamic plugin ([grblHAL motor plugins](https://github.com/grblHAL/Plugins_motor/blob/master/README.md)). On an early SKR Pico map, the reporter had to send $338=15 to enable the drivers, until a board-map change removed the need; see the SKR Pico board map thread ([issue 42](https://github.com/grblHAL/RP2040/issues/42)).
 
 **Steps per mm for a leadscrew** (a standard calculation, not from a source above):
 
@@ -320,7 +319,7 @@ Start-up current workaround from the tracker: `$1=25` with `$37=0` reduced the p
 Pin assignments are fixed at compile time by the board map file, and I could not open the SKR Pico map directly (GitHub blocks automated fetches). So **do not copy pins from this guide: read them from your own board**.
 
 1. Send `$PINS` (see step 2) and note which inputs and outputs your build exposes.
-2. Check [BTT's pinout PDF](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/Hardware/BTT%20SKR%20Pico%20V1.0-PIN.pdf) (`BTT SKR Pico V1.0-PIN.pdf`, also referenced on the [BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)) for connector names.
+2. Check BTT's pinout PDF (`BTT SKR Pico V1.0-PIN.pdf`, referenced on the [BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)) for connector names.
 3. Wire one input at a time and watch it in the sender or with `?` status reports.
 
 What the sources do confirm:
@@ -349,7 +348,7 @@ If an alarm triggers, `$X` unlocks it after you have moved clear. `$EAG` lists a
 
 **Pick gSender first.** It has first-class grblHAL support and a published 64-bit Pi `.deb`, while the evidence for bCNC on this stack is one forum post. That is my judgement from the sources, not a benchmark.
 
-| | gSender | bCNC |
+|  | gSender | bCNC |
 | --- | --- | --- |
 | grblHAL support | Official; 1.6.0 (April 2026) added compatibility with newer grblHAL cores ([Sienci](https://sienci.com/2026/04/16/gsender-1-6-0-release/)) | Reported working on a Pi 3B+ with grblHAL (one user, 2021) ([OpenBuilds forum](https://openbuilds.com/posts/111276/)) |
 | Pi install | 64-bit `.deb` from the [gSender releases](https://github.com/Sienci-Labs/gsender/releases); needs a desktop session, not headless ([README](https://github.com/Sienci-Labs/gsender)) | Python app, installed per the [bCNC wiki](https://github.com/vlachoudis/bCNC) (I did not verify the steps) |
@@ -434,10 +433,10 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - [grblHAL core discussion 572](https://github.com/grblHAL/core/discussions/572).
 - [grblHAL motor plugins README](https://github.com/grblHAL/Plugins_motor/blob/master/README.md): Trinamic driver support.
 - [Firmware flashing docs](https://petervanderwalt.github.io/grblhal_docs/Getting-Started/firmware-flashing) (full) and [settings reference](https://petervanderwalt.github.io/grblhal_docs/Reference/complete-settings-reference): community-hosted mirror of the grblHAL documentation, not the official wiki.
+- [Sienci grbl/grblHAL useful commands](https://sienci.zendesk.com/hc/en-us/articles/36094043206036-grbl-grblHAL-Useful-Commands): `$$=n`, `$ESG`, `$EAG`, `$X`.
 - [grblHAL Web Builder](https://svn.io-engineering.com:8443/) (viewed 26 Nov 2026, v1.0.1, build 20261123) and the grblHAL [Compiling grblHAL wiki page](https://github.com/grblHAL/core/wiki/Compiling-grblHAL): the page and flashing notes that Step 1 walks through.
 - [BTT SKR Pico V1.0 Instruction Manual](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/BTT%20SKR%20Pico%20V1.0%20Instruction%20Manual.pdf) (full, linked not copied): the Boot jumper and Reset button flashing procedure.
 - [Voron docs, SKR Pico Klipper firmware](https://docs.vorondesign.com/build/software/skrPico_klipper.html): the same bootloader steps from a second source, including the USB power jumper.
-- [Sienci grbl/grblHAL useful commands](https://sienci.zendesk.com/hc/en-us/articles/36094043206036-grbl-grblHAL-Useful-Commands): `$$=n`, `$ESG`, `$EAG`, `$X`.
 
 ### Worked example
 
@@ -472,6 +471,7 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - [Batch Post add-in (Tim Paterson)](https://github.com/TimPaterson/Fusion360-Batch-Post): a third-party description of the free version's G-code limits.
 - [Using Fusion with Grbl (Autodesk)](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/), [Grbl tips](https://www.autodesk.com/products/fusion-360/blog/?p=13395) and [Post Process overview](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-POST-PROCESSING-OVERVIEW.htm): post processors and the Grbl post.
 - [Grbl v1.1 interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface): how senders stream G-code and how the controller buffers and plans it.
+
 - [OpenBuilds Fusion 360 postprocessor](https://github.com/OpenBuilds/OpenBuilds-Fusion360-Postprocessor): the recommended post, files and version notes.
 - [Changes to Fusion for personal use (Autodesk help)](https://help.autodesk.com/view/fusion360/ENU/?caas=caas%2Fsfdcarticles%2Fsfdcarticles%2FFusion-360-Free-License-Changes.html): no rapid moves, no automatic tool changes, one post per tool.
 - Autodesk help: [selecting a post](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-REF-NC-PROGRAM-POST-SELECTION.htm), [managing the Post Library](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-ADD-POST-PROCESSOR-TO-LIBRARY.htm) and [editing post properties](https://www.autodesk.com/products/fusion-360/blog/a-quick-introduction-to-editing-post-processors).
@@ -480,7 +480,7 @@ Every source used to put this guide together is listed here. Pages marked (full)
 
 ### Licences
 
-- [Creative Commons CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/): the licence for this guide. My automated fetch of that site was refused, so the repository's `LICENSE` text came from the [choosealicense.com](https://choosealicense.com/licenses/cc-by-sa-4.0/) copy of it. Compare it with the official text.
+- [Creative Commons CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/): the licence for this guide. My automated fetch of that site was refused, so the repository's LICENSE text came from the [choosealicense.com](https://choosealicense.com/licenses/cc-by-sa-4.0/) copy of it. Compare it with the official text.
 
 ### Not verified: check before relying on them
 
@@ -490,5 +490,5 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - bCNC install steps on a current Pi OS; there is only the one 2021 report above.
 - The `$PINS`, `$C`, `$X` and `$H` behaviour comes from community-hosted docs and standard Grbl convention. Confirm with `$$=n` and `$ESG` on your firmware build.
 - The licences of the RP2040 driver and bCNC, and the grblHAL core licence (seen only on a mirror). Read each upstream licence file before reusing its code.
-- The Step 1 Web Builder walkthrough comes from reading the live page on 26 Nov 2026 (v1.0.1) without generating a build. I have not flashed this board. Whether the download is a bare `.uf2` or a zip is unconfirmed, and the bootloader steps come from BTT's manual and the Voron docs.
 - Current limit and safety-engineering choices (E-stop, conservative speeds, 0.5 A start) and the power-supply checks are my recommendations, not vendor figures.
+- The Step 1 Web Builder walkthrough comes from reading the live page on 26 Nov 2026 (v1.0.1) without generating a build. I have not flashed this board. Whether the download is a bare `.uf2` or a zip is unconfirmed, and the bootloader steps come from BTT's manual and the Voron docs.
