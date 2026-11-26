@@ -170,7 +170,7 @@ flowchart TB
   end
   subgraph pico["SKR Pico connector, pin order from BTT PDF"]
     direction LR
-    P1["2B = A"] ~~~ P2["1B = B"] ~~~ P3["1A = B'"] ~~~ P4["2A = A'"]
+    P1["2B = A"] ~~~ P2["1B = B'"] ~~~ P3["1A = B"] ~~~ P4["2A = A'"]
   end
   supplied -->|"re-pin the board end"| pico
 ```
@@ -178,6 +178,24 @@ flowchart TB
 In the example, coil A is the wire pair A and A', and coil B is B and B'. On the connector, coil A takes the outer pins (2B and 2A) and coil B takes the middle pins (1B and 1A). The diagram is a worked example only; find your own motor's two coils by testing first.
 
 **Do not trust wire colours.** They differ between makers, and Duet forum regulars advise identifying the windings by testing instead ([Duet forum](https://forum.duet3d.com/post/286023)).
+
+**A typical motor, and the one swap.** A common 4-wire NEMA 17 pairs black with green for one coil and red with blue for the other ([applied-ee](https://applied-ee.github.io/embedded/docs/motor-control/stepper-motors/stepper-types-and-wiring/)). If a cable runs in the order black, green, red, blue, the pairs are side by side. The diagram shows that case: swapping the wires in pins 2 and 4 (green and blue) puts black and green on the outer pins and blue and red on the middle pins, which is what the connector needs. The motor may then turn the opposite way; part C below says how to fix that. This is my own working-out from the connector labels, so test before you trust it, and note that a motor with a different pairing needs a different swap. The rule to apply is always the same: one coil outer, the other coil in the middle.
+
+```mermaid
+flowchart TB
+  subgraph supplied["Typical 4-wire motor, as often supplied"]
+    direction LR
+    S1["pin 1: Black (coil A)"] ~~~ S2["pin 2: Green (coil A)"] ~~~ S3["pin 3: Red (coil B)"] ~~~ S4["pin 4: Blue (coil B)"]
+  end
+  subgraph pico["SKR Pico connector, after the swap"]
+    direction LR
+    P1["2B: Black"] ~~~ P2["1B: Blue"] ~~~ P3["1A: Red"] ~~~ P4["2A: Green"]
+  end
+  S1 --> P1
+  S2 -->|"swap pins 2 and 4"| P4
+  S3 --> P3
+  S4 -->|"swap pins 2 and 4"| P2
+```
 
 **A. Find the two coils** (motor unplugged, nothing powered):
 
@@ -190,7 +208,7 @@ In the example, coil A is the wire pair A and A', and coil B is B and B'. On the
 
 1. Put one coil's two wires on the outer pins (2B and 2A) and the other coil's two wires on the middle pins (1B and 1A).
 2. Which wire of a coil goes on which of its two pins only decides the direction the motor turns, not whether it runs ([RepRap wiki](https://reprap.org/wiki/Stepper_wiring)). So you can fix direction later by swapping one coil's two wires.
-3. Worked example (not your motor's colours): a cable in the order A, A', B, B' becomes A, B, B', A' on pins 2B, 1B, 1A, 2A. In practice that means moving the last wire of coil A to the far end.
+3. Worked example (not your motor's colours): a cable in the order A, A', B, B' on pins 1 to 4 becomes A, B', B, A' after you swap the wires in pins 2 and 4. That puts coil A on the outer pins and coil B on the middle pins. The motor may then turn the opposite way, which part C explains how to fix.
 4. To move a crimped pin, MatterHackers describes lifting the connector's black retaining tab with a small flat-head screwdriver, sliding the pin out the back, and pushing it back in with its ledge aligned to the tab ([MatterHackers](https://help.matterhackers.com/article/290-e3d-hemera-stepper-motor-wiring-correction)). That article is about a Dupont-style connector. I have not verified which housing your motor leads use, so check yours. Change the board-end connector only, and leave the motor-end plug alone, as MatterHackers advises.
 
 **C. Check before powering up.** With the motor plugged into its connector and the board off, measure at the connector: pins 1 and 4 should read a low resistance, pins 2 and 3 should read a low resistance, and pin 1 to pin 2 should read open (my check, from the pairing rule above). Then continue with the settings below, starting at a low current.
