@@ -15,6 +15,7 @@ A step-by-step guide for people who are familiar with open source 3D printers, a
 - [Read first: known SKR Pico risks](#read-first-known-skr-pico-risks)
 - [Step 0: Build the Raspberry Pi image and first boot](#step-0-build-the-raspberry-pi-image-and-first-boot)
 - [Step 1: Build and flash grblHAL](#step-1-build-and-flash-grblhal)
+- [Open a serial terminal to type commands to the board](#open-a-serial-terminal-to-type-commands-to-the-board)
 - [Step 2: Connect, verify and reset](#step-2-connect-verify-and-reset)
 - [Step 3: Motors, current and motion settings](#step-3-motors-current-and-motion-settings)
   - [Work out your motor wiring first](#work-out-your-motor-wiring-first)
@@ -226,6 +227,90 @@ The red boxes mark the three parts used below: the **USB Power** jumper (top rig
 3. Unplug USB, remove the Boot jumper (and the USB power jumper if you fitted it), then press Reset or power-cycle the board (BTT's manual).
 
 **D. Check it worked.** Carry on with Step 2, which opens a terminal and reads `$I` and `$$`. Confirm that `$140` to `$143` (motor current) and `$150` to `$153` (microsteps) exist. If they are missing, re-check the Driver and Boards selections and build again.
+
+## Open a serial terminal to type commands to the board
+
+Steps 2 to 5 type commands such as `$I` and `$$` straight to the board. A sender such as gSender can do this, but any program that opens the board's USB serial port will do. A terminal is handy when you want to check the firmware before a sender is installed, or when a sender will not connect.
+
+**Close gSender and any other sender first.** Only one program should hold the port at a time. One LightBurn user with an SKR Pico had to reset the controller before another program could use the port ([LightBurn forum](https://forum.lightburnsoftware.com/t/connecting-to-grblhal-without-welcome-message/92961)).
+
+**Settings to use**
+
+- **Speed 115200, 8 data bits, no parity, 1 stop bit** ([Grbl configuration page](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Configuration/f7a8ef43bd2bc0dab6e7cbdd31a05668d22d3394), [grblHAL first-connection page](https://petervanderwalt.github.io/grblhal_docs/Getting-Started/first-connection)). Set flow control to None.
+- **Line ending:** grblHAL accepts CR, LF or CRLF, so any Enter key setting works ([grblHAL sender notes](https://petervanderwalt.github.io/grblhal_docs/Advanced-Topics/sender-interface)).
+- **Local echo off.** If every letter you type appears twice, turn local echo off.
+- **Do not type at once.** Native USB boards do not reset when a program connects ([grblHAL sender notes](https://petervanderwalt.github.io/grblhal_docs/Advanced-Topics/sender-interface)), so wait a moment, then press Enter.
+
+**What you can use on each system**
+
+|  | Supplied with the system | Open source, free to install | How to install |
+| --- | --- | --- | --- |
+| Windows | None that I could confirm. Device Manager only shows you the COM port number | [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) and [Tera Term](https://teratermproject.github.io/index-en.html) (BSD licence, per [Wikipedia](https://en.wikipedia.org/wiki/Tera_Term)) | Download the installer from each project's own site |
+| macOS | `screen`, included with macOS ([Adafruit](https://learn.adafruit.com/adafruit-metro-rp2350/advanced-serial-console-on-mac-and-linux)) | `tio`, `picocom` ([GPL-2.0-or-later](https://formulae.brew.sh/formula/picocom)) and `minicom` ([GPL-2.0-or-later](https://formulae.brew.sh/formula/minicom)) | Homebrew: `brew install tio` (see the Homebrew steps below) |
+| Linux | `screen` is often already installed; if not, install it from your package manager ([Adafruit](https://learn.adafruit.com/adafruit-rp2040-feather-thinkink/advanced-serial-console-on-linux)) | `tio`, `picocom`, `minicom` | `sudo apt install tio` or `sudo dnf install tio` ([install list](https://linuxcommandlibrary.com/man/tio)); the same pattern works for `picocom` |
+
+If you want the simplest choice: PuTTY on Windows, `screen` on a Mac (nothing to install), and `tio` on Linux or on a Mac with Homebrew. I did not check the licence of `tio` or `screen`.
+
+### Windows
+
+1. Install PuTTY or Tera Term.
+2. Open Device Manager and expand **Ports (COM & LPT)**. Look once with the board unplugged and once with it plugged in. The new entry, often named like "USB Serial Device (COM3)", is the board ([Adafruit](https://learn.adafruit.com/welcome-to-circuitpython/advanced-serial-console-on-windows), [grblHAL first-connection page](https://petervanderwalt.github.io/grblhal_docs/Getting-Started/first-connection)).
+3. **PuTTY:** choose connection type **Serial**, type the COM port into **Serial line**, set **Speed** to 115200, set **Flow control** to None, then click **Open** ([Microchip's PuTTY steps](https://onlinedocs.microchip.com/oxy/GUID-89EB0D7B-28D5-4DB5-8514-92AEE14FBED9-en-US-3/GUID-6D5F647D-41C7-4B81-8ED4-373DA08BCFDB.html)). Type a name under **Saved Sessions** and click **Save** to reuse the settings ([example](https://web.eece.maine.edu/~vweaver/classes/ece177_2026s/labs/configure_putty.pdf)).
+4. **Tera Term:** in the New connection window pick **Serial** and choose the port from the list. Adjust speed under **Setup > Serial port** ([SparkFun](https://learn.sparkfun.com/tutorials/terminal-basics/tera-term-windows)).
+
+### macOS
+
+1. Open **Terminal** (Applications > Utilities).
+2. Run `ls /dev/tty.*` with the board unplugged, then again with it plugged in. The new entry, usually named like `/dev/tty.usbmodem1101`, is the board ([Adafruit](https://learn.adafruit.com/adafruit-metro-rp2350/advanced-serial-console-on-mac-and-linux)). The number will differ on your Mac.
+3. **Built-in `screen`:** run `screen /dev/tty.usbmodem1101 115200`, using your own port name. To leave, press Ctrl-A, then K; `screen` may ask you to confirm ([a user's tip on SparkFun](https://learn.sparkfun.com/tutorials/terminal-basics/discuss)). Adafruit warns that `screen` is rough around the edges and suggests `tio` if you can install it.
+4. **`tio`:** after installing it with Homebrew, run `tio /dev/tty.usbmodem1101`. Its defaults are 115200, 8 data bits, no parity, 1 stop bit and no flow control ([tio README](https://github.com/FS-make-simple/tio)).
+
+#### Homebrew on the Mac: check for it, and install it if it is missing
+
+Homebrew's own documentation does not describe a check for whether it is installed ([Homebrew install docs](https://docs.brew.sh/Installation)), so steps 2 and 3 below are plain shell commands that I am suggesting, not Homebrew's.
+
+**Step 1. Check your Mac.** Homebrew needs macOS Sequoia (15) or newer, and it treats Intel Macs as a lower-priority configuration ([Homebrew install docs](https://docs.brew.sh/Installation)). To see which chip you have, open the Apple menu and choose **About This Mac**.
+
+**Step 2. Check whether Homebrew is installed.** In Terminal, run:
+
+```
+brew --version
+```
+
+If it prints a version number, Homebrew is installed and on your path. Skip to step 6.
+
+**Step 3. If you see "command not found", look for it.** It may be installed but missing from your path. Check the default location: `ls /opt/homebrew/bin/brew` on an Apple Silicon Mac, or `ls /usr/local/bin/brew` on an Intel Mac (the default prefixes are listed on [brew.sh](https://brew.sh/)). If the file exists, go to step 5. If you get "No such file", Homebrew is not installed.
+
+**Step 4. Install it.** Copy the command only from [brew.sh](https://brew.sh/), not from a blog post, because old copies exist. At the time of writing it is:
+
+```
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+The script explains what it will do and then pauses before it does it ([brew.sh](https://brew.sh/)), so read what it says. You need the Xcode Command Line Tools only to build packages from source ([Homebrew install docs](https://docs.brew.sh/Installation)); the installer will tell you if it needs them.
+
+**Step 5. Put it on your path.** At the end the installer prints "Next steps" for your shell. Follow them: Homebrew's documentation says it will not work if you skip them. On an Apple Silicon Mac the line is `eval "$(/opt/homebrew/bin/brew shellenv)"`; add it to `~/.zprofile` as the installer instructs, then open a new Terminal window ([Homebrew install docs](https://docs.brew.sh/Installation)).
+
+**Step 6. Confirm, then install a terminal.** Run `brew --version` again to confirm, then `brew install tio`.
+
+### Linux
+
+1. Run `ls /dev/ttyACM*` with the board unplugged, then again with it plugged in. The new entry, usually `/dev/ttyACM0`, is the board ([Adafruit](https://learn.adafruit.com/adafruit-rp2040-feather-thinkink/advanced-serial-console-on-linux)). A board with its own USB port normally shows as `ttyACM`, not `ttyUSB` ([overview](https://cmaven.github.io/en/etc/linux-serial-terminal-programs/)).
+2. **Permission.** Run `ls -l /dev/ttyACM0` to see which group owns the port. On most systems it is `dialout`. Add yourself with `sudo usermod -a -G dialout $USER`, replacing `dialout` with the group you saw, then log out and back in or restart ([Arduino support](https://support.arduino.cc/hc/en-us/articles/360016495679-Fix-port-access-on-Linux)).
+3. **`tio`:** run `tio /dev/ttyACM0`. To quit, press Ctrl-T, then Q ([Adafruit](https://learn.adafruit.com/adafruit-memento-camera-board/advanced-serial-console-on-linux)). Using the path under `/dev/serial/by-id/` gives the board a stable name and lets `tio` reconnect when you replug it ([tio README](https://github.com/FS-make-simple/tio)).
+4. **`picocom`:** run `picocom -b 115200 /dev/ttyACM0`. To quit, press Ctrl-A, then Ctrl-X ([picocom man page](https://manpages.ubuntu.com/manpages/resolute/man1/picocom.1.html)).
+5. **`screen`:** run `screen /dev/ttyACM0 115200`. To quit, press Ctrl-A, then K.
+
+### What to type first
+
+Press Enter, then type `$I` and press Enter. The board should print its version and build information. `$$` lists the settings ([Easel forum](https://forum.easel.com/t/using-grbl-direct-communication/16073)). Steps 2 and 3 say which values to expect and what to change. Close the terminal before you open gSender.
+
+### If nothing appears
+
+- **No new port when you plug in:** the board may still be in bootloader mode. Remove the Boot jumper and press Reset (see Step 1 part B), then check the port list again.
+- **Port busy or permission denied:** close gSender and any other terminal, unplug and replug the board, and on Linux check the `dialout` step. On some Linux systems ModemManager opens new serial ports for a while after you plug them in ([one user's account](https://downtowndougbrown.com/?p=968)); I have not checked whether it affects this board.
+- **Connected but silent:** press Enter, or send `?` for a status line. A LightBurn user's SKR Pico answered only after the program turned DTR on ([LightBurn forum](https://forum.lightburnsoftware.com/t/connecting-to-grblhal-without-welcome-message/92961)), so try a different terminal if yours has no DTR setting.
+- **Every letter doubled:** turn local echo off.
 
 ## Step 2: Connect, verify and reset
 
@@ -549,6 +634,16 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - [CraftLauncher (artcraft-launcher)](https://github.com/EricVogt93/artcraft-launcher): independent installer and updater for the ArtCraft family, Apache-2.0; its README does not name CamCraft or SOLIDcraft.
 - [FreeCAD wiki, CAM development roadmap](https://wiki.freecad.org/CAM_Development_Roadmap): the established open source CAM workbench.
 
+### Serial terminals and Homebrew
+
+- [grblHAL first-connection page](https://petervanderwalt.github.io/grblhal_docs/Getting-Started/first-connection) and [sender notes](https://petervanderwalt.github.io/grblhal_docs/Advanced-Topics/sender-interface): finding the port, 115200, line endings and native USB behaviour. Community-hosted mirror, not the official wiki.
+- [Grbl v1.1 configuration](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Configuration/f7a8ef43bd2bc0dab6e7cbdd31a05668d22d3394): 115200, 8-N-1 and the `$` commands, written for Grbl, not grblHAL.
+- Adafruit serial console guides for [Windows](https://learn.adafruit.com/welcome-to-circuitpython/advanced-serial-console-on-windows), [macOS](https://learn.adafruit.com/adafruit-metro-rp2350/advanced-serial-console-on-mac-and-linux) and [Linux](https://learn.adafruit.com/adafruit-rp2040-feather-thinkink/advanced-serial-console-on-linux): finding the port, `screen` and `tio`. Written for other RP2040 boards.
+- [Microchip PuTTY steps](https://onlinedocs.microchip.com/oxy/GUID-89EB0D7B-28D5-4DB5-8514-92AEE14FBED9-en-US-3/GUID-6D5F647D-41C7-4B81-8ED4-373DA08BCFDB.html), [PuTTY home](https://www.chiark.greenend.org.uk/~sgtatham/putty/), [Tera Term site](https://teratermproject.github.io/index-en.html) and [SparkFun Tera Term page](https://learn.sparkfun.com/tutorials/terminal-basics/tera-term-windows).
+- [tio README](https://github.com/FS-make-simple/tio), [picocom man page](https://manpages.ubuntu.com/manpages/resolute/man1/picocom.1.html), and the Homebrew formulae for [picocom](https://formulae.brew.sh/formula/picocom) and [minicom](https://formulae.brew.sh/formula/minicom).
+- [Arduino: fix port access on Linux](https://support.arduino.cc/hc/en-us/articles/360016495679-Fix-port-access-on-Linux): the `dialout` group. [ModemManager account](https://downtowndougbrown.com/?p=968) and a [LightBurn forum thread](https://forum.lightburnsoftware.com/t/connecting-to-grblhal-without-welcome-message/92961): user reports, not vendor documentation.
+- [Homebrew](https://brew.sh/) and its [install docs](https://docs.brew.sh/Installation): the install command, requirements and shellenv step.
+
 ### Licences
 
 - [Creative Commons CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/): the licence for this guide. My automated fetch of that site was refused, so the repository's LICENSE text came from the [choosealicense.com](https://choosealicense.com/licenses/cc-by-sa-4.0/) copy of it. Compare it with the official text.
@@ -564,3 +659,4 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - Current limit and safety-engineering choices (E-stop, conservative speeds, 0.5 A start) and the power-supply checks are my recommendations, not vendor figures.
 - The Step 1 Web Builder walkthrough comes from reading the live page on 26 Nov 2026 (v1.0.1) without generating a build. I have not flashed this board. Whether the download is a bare `.uf2` or a zip is unconfirmed, and the bootloader steps come from BTT's manual and the Voron docs.
 - The CamCraft, SOLIDcraft and CraftLauncher notes come from each project's front page or README on 26 Nov 2026, and the CamCraft grblHAL post from its [machines guide](https://neotech.github.io/Camcraft/guide/check-and-post/machines/). I could not confirm how new these projects are, whether CamCraft's grblHAL post suits a mill with this controller's settings (the page pairs it with the Sienci AltMill machines and a generic 3-axis file), whether CraftLauncher lists CamCraft or SOLIDcraft, which of SOLIDcraft's export formats CamCraft can import, or whether SOLIDcraft is connected to ArtCraft (its page does not mention it). I have not installed or run any of them.
+- The serial terminal section comes from vendor and community pages read on 27 Nov 2026, mostly written for other boards. I have not tried any terminal on this board on any system. Port names such as `tty.usbmodem1101` and `ttyACM0` are typical, not confirmed for the SKR Pico. The Homebrew check commands (`brew --version` and the file checks) are my suggestions, because Homebrew's documentation gives none. The PuTTY licence, and the licences of `tio` and `screen`, were not confirmed. I did not check the quit keys for `screen` beyond a user's tip.
