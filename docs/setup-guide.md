@@ -56,7 +56,7 @@ flowchart LR
 5. **Sender: stream the file.** A common idea is that the sender converts G-code into something the firmware understands. It does not: grblHAL already reads G-code, so the sender's jobs are to feed the file to the controller one line at a time, read the replies, and give you live controls such as jog, hold and overrides. In Grbl's documented protocol the controller answers each line with ok or an error, and the sender either waits for every reply or counts characters so the controller's buffers stay full ([Grbl interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface)). Real-time commands such as feed hold and status requests are picked out as they arrive and act immediately, not in the queue (same source). Those notes describe Grbl 1.1, and grblHAL is built from the same family but I have not checked its buffer sizes. If the stream cannot keep the planning buffer full, motion turns stop-start (same source), which is one reason the sender computer should not be struggling.
 6. **Controller: turn lines into motion.** The SKR Pico running grblHAL does the time-critical work. Grbl is described as software that converts G-code into machine motion ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)). It parses each line, plans moves ahead so it can accelerate and slow down smoothly ([Grbl interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface)), and pulses the stepper drivers, which move the NEMA 17 motors. It also handles homing, limit switches and alarms, covered in Steps 4 and 5 below.
 
-**Where to look when something is wrong** (my guidance, using the stages above):
+**Where to look when something is wrong**:
 
 - Wrong shape or size: CAD or CAM, before any G-code exists.
 - A line is rejected with an error reply: the G-code or post processor, so read that line ([Grbl interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface)).
@@ -88,7 +88,7 @@ This project mixes electronics, power supplies and a machine with a spinning cut
 | Terminal / console | A text window where you type a command and the board answers |
 | `$` commands | grblHAL's own commands, like `$$` (show settings) and `$H` (home) |
 
-**More words you will meet** (my plain-language definitions unless a source is linked):
+**More words you will meet**:
 
 | Word | What it means here |
 | --- | --- |
@@ -113,7 +113,7 @@ This project mixes electronics, power supplies and a machine with a spinning cut
 
 ## What you will need
 
-This list is my own, built from what the steps below ask for. It is not from a vendor source.
+This list is a guide for the basics, but additional parts will likely be required.
 
 **Parts**
 
@@ -136,13 +136,13 @@ This list is my own, built from what the steps below ask for. It is not from a v
 
 **Skills**
 
-You do not need to write code. You do need to be comfortable typing short commands into a terminal window (the guide shows you how) and following a wiring diagram. Anything connected to mains power is for an adult or a qualified electrician.
+You do not need to write code. You do need to be comfortable typing short commands into a terminal window (the guide shows you how) and following a wiring diagram. Anything connected to mains power is for a suitably qualified person or electrician.
 
 ## Architecture and parts
 
 The Pi runs the sender (UI and G-code streaming); the SKR Pico runs grblHAL (step generation, limits, spindle) and its on-board TMC2209 drivers move the NEMA17s. They talk over USB serial.
 
-**The sender does not have to run on a Pi.** gSender or bCNC can run on any existing PC or laptop, whether Windows, Linux or Mac, connected to the SKR Pico by the same USB-C cable (gSender publishes Windows, Mac and Linux builds as well as a Pi build, per [Sienci](https://github.com/Sienci-Labs/gsender)). This guide uses a Raspberry Pi with a touchscreen so the machine is self-contained and needs no separate computer.
+**The sender does not have to run on a Raspberry Pi.** gSender or bCNC can run on any existing PC or laptop, whether Windows, Linux or Mac, connected to the SKR Pico by the same USB-C cable (gSender publishes Windows, Mac and Linux builds as well as a Pi build, per [Sienci](https://github.com/Sienci-Labs/gsender)). This guide uses a Raspberry Pi with a touchscreen so the machine is self-contained and needs no separate computer.
 
 1. Touchscreen → Raspberry Pi (Raspberry Pi OS, 64-bit) running gSender or bCNC.
 2. Pi → SKR Pico over USB-C (the Pico enumerates as a serial device; grblHAL uses 115200 baud, 8N1 on a terminal).
@@ -164,20 +164,20 @@ flowchart LR
   PS["Probe and spindle (optional)<br/>find pins with $PINS first"] -.-> PICO
 ```
 
-The Pi and its touchscreen are one unit; a single USB-C cable carries all G-code and status between the Pi and the Pico. Steppers, limit switches and power wire straight to the Pico; the dashed items are optional or alternatives.
+The Pi and its touchscreen can be one unit; the author used a dedicated portable touch screen monitor via HDMI and USB for increased resolution and larger display.  A single USB-C cable carries all G-code and status between the Pi (or Sender software) and the Pico. Steppers, limit switches and power wire straight to the Pico; the dashed items are optional or alternatives.
 
 | Part | Notes |
 | --- | --- |
 | BTT SKR Pico V1.0 | RP2040, 12 to 24 V DC input, 3.3 V logic, TMC2209 drivers soldered on (a dead driver means replacing the board) |
 | NEMA17 steppers | Match current to the motor rating; TMC2209 tops out at 2 A RMS per the datasheet and BTT advises a fan above 0.8 A |
-| Raspberry Pi 4 or better, 64-bit OS | gSender's Pi build is 64-bit only; a Pi 3B+ is reported to work with the visualizer off |
+| Raspberry Pi 4 or better, 64-bit OS | gSender's Pi build is 64-bit only; a Pi 3B+ is reported to work with the visualizer off.  A old laptop running Linux works well too for repurposing old hardware and keeping costs down, given how expensive new hardware is right now thanks to the AI boom. |
 | Touchscreen | Larger is better: forum reports say small screens struggle with sender layouts |
 | 12 to 24 V DC PSU | Size it for all motors plus margin; one grblHAL SKR Pico build guide recommends 150 W minimum for a foam cutter |
 | Limit switches (NC), probe, spindle | Wiring covered in step 4 |
 
 **Power supply tip: reuse an old laptop or docking-station charger.** These usually output around 19 V DC, which sits inside the SKR Pico's 12 to 24 V DC input range ([BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)) and within the 5.5 to 28 V motor-supply range quoted for TMC2209 driver modules.
 
-A used 65 to 90 W unit is a cheap way to power the board and steppers.
+A used 65 W to 120 W unit is a cheap way to power the board and steppers.
 
 - **Read the label.** You need DC output (not AC), the voltage, and the amps. Volts × amps = watts. Add up your motor currents with a margin; the foam-cutter build guide I read recommends at least 150 W for its machine ([RC Keith](https://rckeith.co.uk/electronics-build-guide-btt-skr-pico/)), so a small charger suits only modest motor currents. Test before trusting it, and
 - **Keep it at or under 24 V.** 19 to 20 V is fine. I could not confirm the board's tolerance above 24 V, so do not use higher-voltage chargers.
@@ -496,14 +496,24 @@ Until the machine is homed and limits tested, keep spindle power off and use a h
 
 ## Optional: switch the spindle on and off with a relay
 
-**In plain English:** a relay is a switch that a small electrical signal operates. If the board can switch the relay, the G-code's M3 and M5 lines can start and stop a spindle that has no speed control of its own. The SKR Pico has heater outputs that suit this, because they are built to switch loads far larger than a small relay coil. This section covers on and off only, not variable speed.
+**In plain English:** a relay is a switch that a small electrical signal operates. If the board can switch the relay, the G-code's M3 and M5 lines can start and stop a spindle that has no speed control of its own. The SKR Pico has two kinds of switched output that can drive a relay coil: the fan outputs (FAN1 to FAN3) and the heater outputs (HE and HB). Both switch the return leg of the load. This section covers on and off only, not variable speed.
 
-**What the board gives you.** One third-party hub page describes the heater outputs this way: the + screw sits at the PSU voltage whenever the board is powered, and the low-side MOSFET switches the return leg; an LED beside each output glows when it fires ([Honeybadger SKR Pico hub](https://honeybadger.software/3d-printing/skr-pico/)). I have not checked that against BTT's schematic. In practice that means a relay coil connects between the output's **+** and its switched **−** terminal.
+**What the board gives you.** One third-party hub page ([Honeybadger SKR Pico hub](https://honeybadger.software/3d-printing/skr-pico/)) describes two output types. The fan outputs FAN1, FAN2 and FAN3 are polarised (red wire is +), pass the 12 or 24 V supply through, and switch the return leg with a low-side transistor that has a flyback diode. The heater outputs HE and HB are non-polarised: the + screw sits at the supply voltage whenever the board is powered, and a low-side MOSFET switches the other terminal. An LED beside each output glows when it fires. The same page says the board has a 20 A input fuse and gives no current rating per output. I have not checked any of this against BTT's schematic. In practice a relay coil connects between the output's + and its switched − terminal.
+
+**Recommended: FAN1 for the relay coil.** FAN1 is polarised, so the coil cannot be wired backwards by accident, and its built-in flyback diode protects the switch from the coil's voltage spike. The heater outputs have no such diode mentioned, so a coil on HE or HB needs its own diode across it. The drawing below shows the wiring for our build. FAN1 is the spindle enable output (M3 and M5). The HE heater output is the alternative, as coolant mist (M7 and M9). Use one, not both, and confirm which pin does what with `$PINS` as described below.
+
+![Our build: SKR Pico connections, with FAN1 driving the relay coil, X, Y and Z motors, power in and USB, and the limit switches optional](images/skr-our-build.jpg)
+
+*Figure: what connects where in our build. Amber boxes are optional (limit switches, not fitted yet), grey boxes are unused. Based on the [Voron SKR Pico wiring diagram](https://docs.vorondesign.com/build/electrical/v0_skr_pico_wiring.html), relabelled for this guide. The Voron page names no author or licence for that image, so check its terms before reusing it elsewhere. Polarity marks follow that diagram: check them against the markings on your board.*
+
+![Schematic: PSU, fuse, E-stop, SKR Pico, relay module, and the mains side with the spindle](images/spindle-relay-wiring.png)
+
+*Figure: power, E-stop and optional spindle relay wiring. The dashed amber zone is mains: adult or qualified person only.*
 
 **Which output to use.** The grblHAL board map for the SKR Pico assigns the outputs as follows in the excerpt I could read: spindle enable on the FAN1 output (GPIO 17), coolant flood on FAN3 (GPIO 20), coolant mist on the HE heater output (GPIO 23), and spindle PWM on the HB bed output (GPIO 21) ([grblHAL SKR Pico map](https://github.com/grblHAL/RP2040/blob/master/boards/btt_skr_pico_10_map.h)). The same excerpt shows a second block that puts spindle PWM on FAN3 instead, so the assignment may depend on how your firmware was built. I could not open the whole file. So there are two ways to do it:
 
-1. **Spindle enable (M3 on, M5 off).** The most natural choice: the G-code already uses these codes. The output named for it in the map excerpt is FAN1, which is not a heater output.
-2. **The HE heater output, as coolant mist (M7 on, M9 off).** This uses the heater output as you suggested, but the G-code needs M7 and M9 lines. A post processor may not write them, so you would send them by hand or add them to the file. I have not tested this.
+1. **Spindle enable (M3 on, M5 off).** The most natural choice: the G-code already uses these codes. The output named for it in the map excerpt is FAN1, which is the recommended choice.
+2. **The HE heater output, as coolant mist (M7 on, M9 off).** This reuses a heater output, but the G-code needs M7 and M9 lines. A post processor may not write them, so you would send them by hand or add them to the file. I have not tested this.
 
 Whichever you pick, **confirm it with your own board**: send `$PINS` and read which output is listed for the function, then test as below.
 
@@ -531,7 +541,7 @@ Whichever you pick, **confirm it with your own board**: send `$PINS` and read wh
 
 **In plain English:** homing is the machine driving each axis to its limit switch to learn where it is, like touching the wall in a dark room. After that, every position is measured from those switches. Do it slowly the first time and keep a hand near the E-stop.
 
-**No limit switches fitted yet? Skip this step for now.** Leave `$22=0`, and set the work zero by hand at the start of each session (Step 8). Soft limits cannot work without homing, so do not enable them ([Grbl configuration page](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Configuration)). Be extra careful with travel: nothing will stop the machine at the end of an axis except you and the E-stop. Come back to this step once the switches are fitted.
+**No limit switches fitted yet? Skip this step for now.** Leave `$22=0`, and set the work zero by hand at the start of each session (Step 8). Soft limits cannot work without homing, so do not enable them ([Grbl configuration page](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Configuration)). Be extra careful with travel: nothing will stop the machine at the end of an axis except you and the E-stop. Come back to this step once the switches are fitted.  (Whilst it simplifies wiring and keeps costs down by not fitting limit switches, it does add operational risk.  Many build these smaller machines without limit switches, but the author recommends considering them to help avoid mistakes when operating the machine.)
 
 1. Confirm manual jogging directions (step 3) and that each limit switch changes state in the status report when pressed by hand.
 2. Set travel: `$130`–`$132` (max travel per axis, mm) to the real stroke.
@@ -656,7 +666,7 @@ Power the Pi from its own supply while you commission, until you have read BTT's
 2. Set X and Y zero. In gSender there are zero buttons for this (I have not verified the layout). From a terminal, `G10 L20 P1 X0 Y0` is the standard G-code way to make the current position X0 Y0 in work set G54. The Grbl commands page I read says only that G54 to G59 can be changed with `G10 L2` or `L20` and does not describe what they do, so confirm the result with `$#`, which prints the stored offsets ([Grbl commands](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Commands)).
 3. Set Z zero: lower the tool in very small jog steps until the tip just touches the top of the stock (a slip of paper under the tip helps), then set Z zero there in the same way, and raise Z clear.
 
-**E. Start the spindle** by hand or with the relay, and check it runs smoothly before anything moves.
+**E. Start the spindle** by hand or with the relay, and check it runs smoothly and is set to the right speed for the cutter and material being machined, before anything moves.
 
 **F. Run the job, with a hand near the E-stop.** Watch the first minute closely. If something looks wrong:
 
@@ -828,7 +838,7 @@ Every source used to put this guide together is listed here. Pages marked (full)
 - The Step 1 Web Builder walkthrough comes from reading the live page on 26 Nov 2026 (v1.0.1) without generating a build. I have not flashed this board. Whether the download is a bare `.uf2` or a zip is unconfirmed, and the bootloader steps come from BTT's manual and the Voron docs.
 - The CamCraft, SOLIDcraft and CraftLauncher notes come from each project's front page or README on 26 Nov 2026, and the CamCraft grblHAL post from its [machines guide](https://neotech.github.io/Camcraft/guide/check-and-post/machines/).
 - The SKR Pico output assignments for spindle enable, coolant mist and the heater and fan outputs, and whether they depend on the build (from a search excerpt of the board map only)
-- Whether the heater outputs suit a relay coil, and their current rating (no BTT figure found)
+- The current rating of the fan and heater outputs when driving a relay coil, and their flyback diode arrangement (third-party page only; no BTT figure found)
 - Whether `$140` takes a peak or RMS current, and the example starting values for `$140`, `$110` and `$120` (my examples, untested)
 - Hard limits (`$21`) with normally closed switches on grblHAL
 - What `G10 L20 P1 X0 Y0` does on this build, and gSender's zero buttons

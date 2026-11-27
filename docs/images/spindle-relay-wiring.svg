@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" role="img" aria-label="Power, E-stop and optional spindle relay wiring for the SKR Pico" font-family="Helvetica, Arial, sans-serif" font-size="12">
+<rect width="960" height="640" fill="#ffffff"/>
+<text x="24" y="30" font-size="15" font-weight="600" fill="#1f2328" text-anchor="start">Power, E-stop and optional spindle relay wiring</text>
+<text x="24" y="50" font-size="11.5" font-weight="400" fill="#59636e" text-anchor="start">Schematic only. Terminal positions are not the board layout.</text>
+<rect x="560" y="18" width="190" height="42" rx="6" fill="#eef0f2" fill-opacity="1" stroke="#8c959f" stroke-width="1.25"/>
+<text x="655" y="35" font-size="12" font-weight="600" fill="#1f2328" text-anchor="middle">Raspberry Pi or PC</text>
+<text x="655" y="52" font-size="11" font-weight="400" fill="#59636e" text-anchor="middle">USB-C data cable</text>
+<polyline points="655,60 655,90" fill="none" stroke="#59636e" stroke-width="2" stroke-dasharray="5 4" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="24" y="100" width="130" height="130" rx="6" fill="#eef0f2" fill-opacity="1" stroke="#8c959f" stroke-width="1.25"/>
+<text x="89" y="122" font-size="12" font-weight="600" fill="#1f2328" text-anchor="middle">12 to 24 V DC</text>
+<text x="89" y="138" font-size="12" font-weight="600" fill="#1f2328" text-anchor="middle">power supply</text>
+<text x="110" y="158" font-size="16" font-weight="600" fill="#cf222e" text-anchor="middle">+</text>
+<text x="110" y="208" font-size="16" font-weight="600" fill="#1f2328" text-anchor="middle">−</text>
+<circle cx="154" cy="150" r="5" fill="#cf222e" stroke="#fff" stroke-width="1"/>
+<circle cx="154" cy="200" r="5" fill="#1f2328" stroke="#fff" stroke-width="1"/>
+<polyline points="154,150 190,150" fill="none" stroke="#cf222e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="190" y="140" width="50" height="20" rx="3" fill="#fff" fill-opacity="1" stroke="#1f2328" stroke-width="1.5"/>
+<text x="215" y="134" font-size="11.5" font-weight="600" fill="#1f2328" text-anchor="middle">Fuse</text>
+<polyline points="240,150 300,150" fill="none" stroke="#cf222e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="300" y="128" width="76" height="44" rx="6" fill="#fff" fill-opacity="1" stroke="#1f2328" stroke-width="1.5"/>
+<circle cx="338" cy="150" r="14" fill="#cf222e" stroke="#fff" stroke-width="2"/>
+<text x="338" y="120" font-size="11.5" font-weight="600" fill="#1f2328" text-anchor="middle">E-stop</text>
+<text x="338" y="186" font-size="11" font-weight="400" fill="#59636e" text-anchor="middle">normally closed</text>
+<polyline points="376,150 430,150" fill="none" stroke="#cf222e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="154,200 430,200" fill="none" stroke="#1f2328" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="430" y="90" width="250" height="330" rx="12" fill="#eef0f2" fill-opacity="1" stroke="#8c959f" stroke-width="1.25"/>
+<text x="555" y="112" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">BTT SKR Pico V1.0</text>
+<circle cx="430" cy="150" r="5" fill="#cf222e" stroke="#fff" stroke-width="1"/>
+<circle cx="430" cy="200" r="5" fill="#1f2328" stroke="#fff" stroke-width="1"/>
+<text x="444" y="154" font-size="11.5" font-weight="600" fill="#cf222e" text-anchor="start">DC power in  +</text>
+<text x="444" y="204" font-size="11.5" font-weight="600" fill="#1f2328" text-anchor="start">DC power in  −</text>
+<text x="444" y="226" font-size="10.5" font-weight="400" fill="#59636e" text-anchor="start">(read the markings on your board)</text>
+<rect x="450" y="246" width="220" height="78" rx="6" fill="#ffffff" fill-opacity="1" stroke="#1f6feb" stroke-width="2"/>
+<text x="462" y="264" font-size="12" font-weight="600" fill="#1f2328" text-anchor="start">FAN1 output (GPIO 17)</text>
+<text x="462" y="280" font-size="11" font-weight="400" fill="#59636e" text-anchor="start">Spindle enable: M3 on, M5 off</text>
+<text x="462" y="300" font-size="11.5" font-weight="600" fill="#cf222e" text-anchor="start">+12/24 V rail</text>
+<text x="462" y="316" font-size="11.5" font-weight="600" fill="#1f2328" text-anchor="start">switched − (low side)</text>
+<line x1="670" y1="296" x2="680" y2="296" stroke="#cf222e" stroke-width="2" stroke-linecap="round"/>
+<line x1="670" y1="312" x2="680" y2="312" stroke="#1f2328" stroke-width="2" stroke-linecap="round"/>
+<circle cx="680" cy="296" r="5" fill="#cf222e" stroke="#fff" stroke-width="1"/>
+<circle cx="680" cy="312" r="5" fill="#1f2328" stroke="#fff" stroke-width="1"/>
+<rect x="450" y="344" width="220" height="66" rx="6" fill="#ffffff" fill-opacity="1" stroke="#8c959f" stroke-width="1.25" stroke-dasharray="6 4"/>
+<text x="462" y="362" font-size="12" font-weight="600" fill="#1f2328" text-anchor="start">Alternative: HE heater (GPIO 23)</text>
+<text x="462" y="378" font-size="11" font-weight="400" fill="#59636e" text-anchor="start">Coolant mist: M7 on, M9 off</text>
+<text x="462" y="396" font-size="11.5" font-weight="400" fill="#59636e" text-anchor="start">+ rail and switched −, same wiring</text>
+<rect x="730" y="236" width="170" height="118" rx="6" fill="#ffffff" fill-opacity="1" stroke="#1f2328" stroke-width="1.5"/>
+<text x="815" y="256" font-size="12" font-weight="600" fill="#1f2328" text-anchor="middle">Relay module</text>
+<text x="740" y="300" font-size="11.5" font-weight="600" fill="#cf222e" text-anchor="start">coil +</text>
+<text x="740" y="316" font-size="11.5" font-weight="600" fill="#1f2328" text-anchor="start">coil −</text>
+<circle cx="730" cy="296" r="5" fill="#cf222e" stroke="#fff" stroke-width="1"/>
+<circle cx="730" cy="312" r="5" fill="#1f2328" stroke="#fff" stroke-width="1"/>
+<polyline points="680,296 730,296" fill="none" stroke="#cf222e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="680,312 730,312" fill="none" stroke="#1f2328" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="815" y="278" font-size="10.5" font-weight="400" fill="#59636e" text-anchor="middle">(or a bare relay + diode)</text>
+<text x="770" y="340" font-size="11.5" font-weight="600" fill="#1f2328" text-anchor="middle">COM</text>
+<text x="860" y="340" font-size="11.5" font-weight="600" fill="#1f2328" text-anchor="middle">NO</text>
+<circle cx="770" cy="354" r="5" fill="#bf8700" stroke="#fff" stroke-width="1"/>
+<circle cx="860" cy="354" r="5" fill="#bf8700" stroke="#fff" stroke-width="1"/>
+<rect x="520" y="432" width="420" height="196" rx="8" fill="#fff8e6" fill-opacity="0.6" stroke="#bf8700" stroke-width="2" stroke-dasharray="8 5"/>
+<text x="535" y="454" font-size="12" font-weight="600" fill="#7d4e00" text-anchor="start">MAINS SIDE</text>
+<text x="535" y="470" font-size="11.5" font-weight="600" fill="#7d4e00" text-anchor="start">Adult or qualified person only</text>
+<rect x="540" y="494" width="120" height="64" rx="6" fill="#ffffff" fill-opacity="1" stroke="#1f2328" stroke-width="1.5"/>
+<text x="600" y="522" font-size="12" font-weight="600" fill="#1f2328" text-anchor="middle">Mains supply</text>
+<text x="600" y="538" font-size="11" font-weight="400" fill="#59636e" text-anchor="middle">through an RCD</text>
+<rect x="800" y="494" width="120" height="64" rx="6" fill="#ffffff" fill-opacity="1" stroke="#1f2328" stroke-width="1.5"/>
+<text x="860" y="522" font-size="12" font-weight="600" fill="#1f2328" text-anchor="middle">Spindle</text>
+<text x="860" y="538" font-size="11" font-weight="400" fill="#59636e" text-anchor="middle">(AC hobby tool)</text>
+<polyline points="660,526 770,526 770,354" fill="none" stroke="#bf8700" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="860,354 860,494" fill="none" stroke="#bf8700" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="668" y="518" font-size="10.5" font-weight="400" fill="#7d4e00" text-anchor="start">live (active)</text>
+<text x="868" y="430" font-size="10" font-weight="400" fill="#1f2328" text-anchor="start"></text>
+<text x="535" y="584" font-size="11" font-weight="400" fill="#7d4e00" text-anchor="start">Use an enclosed, mains-rated relay or switched-socket module.</text>
+<text x="535" y="600" font-size="11" font-weight="400" fill="#7d4e00" text-anchor="start">Only the live conductor is switched. Neutral and earth pass through</text>
+<text x="535" y="616" font-size="11" font-weight="400" fill="#7d4e00" text-anchor="start">the module as its instructions say. Wire it with the wall plug out.</text>
+<text x="24" y="446" font-size="12" font-weight="600" fill="#1f2328" text-anchor="start">Notes</text>
+<text x="24" y="466" font-size="11" font-weight="400" fill="#59636e" text-anchor="start">Red is + (the supply rail). Black is −, and on the outputs it is the</text>
+<text x="24" y="481" font-size="11" font-weight="400" fill="#59636e" text-anchor="start">switched side. Fan outputs are polarised, so the order matters.</text>
+<text x="24" y="496" font-size="11" font-weight="400" fill="#59636e" text-anchor="start"></text>
+<text x="24" y="511" font-size="11" font-weight="400" fill="#59636e" text-anchor="start">FAN1 has a flyback diode built in (per the hub page). A bare relay</text>
+<text x="24" y="526" font-size="11" font-weight="400" fill="#59636e" text-anchor="start">coil still wants its own diode, stripe to +, close to the coil (my advice).</text>
+<text x="24" y="541" font-size="11" font-weight="400" fill="#59636e" text-anchor="start"></text>
+<text x="24" y="556" font-size="11" font-weight="400" fill="#59636e" text-anchor="start">Use the relay’s NO contacts. If the board loses power, the relay drops</text>
+<text x="24" y="571" font-size="11" font-weight="400" fill="#59636e" text-anchor="start">out and the spindle stops. Test it with the cutter removed.</text>
+<text x="24" y="586" font-size="11" font-weight="400" fill="#59636e" text-anchor="start"></text>
+<text x="24" y="601" font-size="11" font-weight="400" fill="#59636e" text-anchor="start">The E-stop sits in the + line, so pressing it removes board power.</text>
+</svg>
