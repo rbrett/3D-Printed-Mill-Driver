@@ -16,7 +16,7 @@ A setup guide for people who already know 3D printers (Marlin/Klipper) and want 
 
 ## Read the guide
 
-**[docs/setup-guide.md](docs/setup-guide.md)** walks through, in order (a printable A4 copy, [docs/setup-guide.pdf](docs/setup-guide.pdf), is a snapshot of 26 Nov 2026; this repository has the latest):
+**[docs/setup-guide.md](docs/setup-guide.md)** walks through, in order (a printable A4 copy, [docs/setup-guide.pdf](docs/setup-guide.pdf), is a snapshot of 27 Nov 2026; this repository has the latest):
 
 0. Building the Raspberry Pi image, first boot and installing gSender (after a short overview of the CAD, CAM and G-code process)
 1. Building grblHAL in the Web Builder and flashing it onto the SKR Pico
