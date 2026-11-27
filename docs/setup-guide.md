@@ -5,7 +5,7 @@ Nov 27, 2026 · Russell Brett
 
 ![The SKR Pico connectors this guide uses](images/skr-pico-connectors.svg)
 
-A step-by-step guide for people who are familiar with open source 3D printers, and may well be interested in moving from additive manufacturing (3D printing) to subtractive manufacturing - milling.  This guide covers re-purposing a cheap 3D printer controller board - an SKR Pico V1.0 running grblHAL firmware, and pairing it with a Raspberry Pi for sending the Gcode.  See the github repository at <https://github.com/rbrett/3D-Printed-Mill-Driver> for updated copies of this manual, and a 3D printed milling machine design that has proven successful for engraving, and very light machining of aluminium.
+A step-by-step guide for people who are familiar with open source 3D printers, and may well be interested in moving from additive manufacturing (3D printing) to subtractive manufacturing - milling. This guide covers re-purposing a cheap 3D printer controller board - an SKR Pico V1.0 running grblHAL firmware, and pairing it with a Raspberry Pi for sending the Gcode. See the github repository at <https://github.com/rbrett/3D-Printed-Mill-Driver> for updated copies of this manual, and a 3D printed milling machine design that has proven successful for engraving, and very light machining of aluminium.
 
 **Contents**
 
@@ -23,7 +23,7 @@ A step-by-step guide for people who are familiar with open source 3D printers, a
 - [Step 5: Homing and soft limits](#step-5-homing-and-soft-limits)
 - [Step 6: Raspberry Pi, touchscreen and sender](#step-6-raspberry-pi-touchscreen-and-sender)
 - [Step 7: Configure Fusion to write G-code for this mill](#step-7-configure-fusion-to-write-g-code-for-this-mill)
-- [New and emerging open source CAD and CAM options](#new-and-emerging-open-source-cad-and-cam-options)
+- [New and emerging open source CAD and CAM alternatives to Autodesk's Fusion](#new-and-emerging-open-source-cad-and-cam-alternatives-to-autodesks-fusion)
 - [Troubleshooting](#troubleshooting)
 - [References and other supporting documentation](#references-and-other-supporting-documentation)
 
@@ -47,10 +47,10 @@ flowchart LR
   GC -->|"copy the file"| SND --> CTL
 ```
 
-1. **CAD: draw the part.** You model the part on screen. This guide's example is Autodesk Fusion, which has a free version for personal use, aimed at hobbyists and people making under US$1,000 a year from their work ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-for-personal-use-vs-autodesk-fusion/), [terms](https://www.autodesk.com/campaigns/fusion-360-personal-use-changes)). **Fusion works on Windows or macOS machines only.  **For Linux users, Any CAD and CAM package that can output Grbl-style G-code follows the same process.
-2. **CAM: plan the cuts.** CAD holds the shape; CAM decides how to cut it: the stock, the tools, the speeds and the tool-paths.   The hobbyist version of Fusion360 has "limited CAM functionality" and "limited import/export file types" for the personal-use version, however the type of milling machine we are building here is "limited"  compared with industrial machines, and won't present us a problem, with the main differences being speed of rapid movements, and lack of tool changes - nothing that will affect our use with these little machines.
+1. **CAD: draw the part.** You model the part on screen. This guide's example is Autodesk Fusion, which has a free version for personal use, aimed at hobbyists and people making under US$1,000 a year from their work ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-for-personal-use-vs-autodesk-fusion/), [terms](https://www.autodesk.com/campaigns/fusion-360-personal-use-changes)). **Fusion works on Windows or macOS machines only. **For Linux users, Any CAD and CAM package that can output Grbl-style G-code follows the same process.
+2. **CAM: plan the cuts.** CAD holds the shape; CAM decides how to cut it: the stock, the tools, the speeds and the tool-paths. The hobbyist version of Fusion has "limited CAM functionality" and "limited import/export file types" for the personal-use version, however the type of milling machine we are building here is "limited" compared with industrial machines, and won't present us a problem, with the main differences being speed of rapid movements, and lack of tool changes - nothing that will affect our use with these little machines.
 3. **Post-process: write the G-code.** A post processor converts the toolpaths into G-code for one particular type of machine ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)). Fusion ships with generic posts and has an online library of more ([Autodesk help](https://help.autodesk.com/cloudhelp/ENU/Fusion-CAM/files/MFG-POST-PROCESSING-OVERVIEW.htm)). Choose the Grbl post, since grblHAL speaks Grbl-style G-code, and test with a simple shape first, as Autodesk advises ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/?p=13395)). The result is a plain text file. Read it before you run it: check the spindle and tool-change lines match how you run the machine.
-4. **Copy the G-code to the machine that runs the sender.** Move the file by USB stick, network share or any other file transfer to the Pi (or whichever computer runs gSender). If the sender runs on the same PC as Fusion, there is nothing to copy.   Open the file in the sender program (gSender or bCNC).
+4. **Copy the G-code to the machine that runs the sender.** Move the file by USB stick, network share or any other file transfer to the Pi (or whichever computer runs gSender). If the sender runs on the same PC as Fusion, there is nothing to copy. Open the file in the sender program (gSender or bCNC).
 5. **Sender: stream the file.** A common idea is that the sender converts G-code into something the firmware understands. It does not: grblHAL already reads G-code, so the sender's jobs are to feed the file to the controller one line at a time, read the replies, and give you live controls such as jog, hold and overrides. In Grbl's documented protocol the controller answers each line with ok or an error, and the sender either waits for every reply or counts characters so the controller's buffers stay full ([Grbl interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface)). Real-time commands such as feed hold and status requests are picked out as they arrive and act immediately, not in the queue (same source). Those notes describe Grbl 1.1, and grblHAL is built from the same family but I have not checked its buffer sizes. If the stream cannot keep the planning buffer full, motion turns stop-start (same source), which is one reason the sender computer should not be struggling.
 6. **Controller: turn lines into motion.** The SKR Pico running grblHAL does the time-critical work. Grbl is described as software that converts G-code into machine motion ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)). It parses each line, plans moves ahead so it can accelerate and slow down smoothly ([Grbl interface notes](https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface)), and pulses the stepper drivers, which move the NEMA 17 motors. It also handles homing, limit switches and alarms, covered in Steps 4 and 5 below.
 
@@ -141,7 +141,7 @@ These come from the grblHAL issue tracker and BTT's wiki. None is a reason to av
 - **Start-up current.** An RP2040 issue reports high current at power-up: the board's Vref pin is unconnected, so the TMC2209 defaults to about 73% of maximum current until grblHAL sets it over UART. One user measured a peak near 200 mA fading to about 35 mA idle with `$1=25` and `$37=0`. The thread does not say which build, if any, fixed it, so confirm behaviour on your own board and PSU ([issue 74](https://github.com/grblHAL/RP2040/issues/74)).
 - **Driver UART addresses.** The standard SKR Pico build maps X=0, Y=2, Z=1, A=3. A pull request notes that the Hotwire variant fell through to a generic map with Y and Z swapped ([PR 204](https://github.com/grblHAL/RP2040/pull/204)). Use the standard `BTT SKR Pico` board in the Web Builder, not the Hotwire variant.
 - **Sensorless homing excludes external switches.** BTT's wiki warns that with sensorless homing enabled, external endstops cannot be used ([BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)). For a mill, my recommendation is physical switches: they are repeatable, and StallGuard needs per-axis tuning.
-- **No spare drivers.** The TMC2209s are soldered on, so a failed driver means a new board.  This is why it's not a good idea to plug or unplug motors whilst the board is powered.
+- **No spare drivers.** The TMC2209s are soldered on, so a failed driver means a new board. This is why it's not a good idea to plug or unplug motors whilst the board is powered.
 - **Set current before you enable motors.** If the current setting reads 0, a build guide warns full current can reach the motors and overheat them ([RC Keith build guide](https://rckeith.co.uk/electronics-build-guide-btt-skr-pico/)).
 - **Pi power.** BTT advertises a 5 V output for an external Pi ([BTT release post](https://bigtree-tech.com/blogs/news/new-release-bigtreetech-skr-pico-v1-0-control-board)), but its wiki does not say whether powering the Pi from the board and via USB together is safe. I could not verify this, so read BTT's pinout PDF before connecting both.
 
@@ -198,7 +198,7 @@ If you are updating existing firmware, save the output of `$$` first; updates ca
 3. Set **Boards** to "BTT SKR Pico 1.0". Do not pick the "Hotwire" variant (see "Read first"). The blue **i** beside Boards lists what the build supports for this board: up to 4 axes and 4 motors, native USB, a probe input, one PWM spindle, ModBus, and no SD card, WiFi or I2C. The page itself warns that list may be incorrect.
 4. On the **General** tab, set the options in the table below. Leave the other tabs (Plugins, Network/WebUI, Advanced features, 3rd party plugins, Optional inputs, I/O expansion) at their defaults for a first build. The page warns that 3rd party plugins may break the compile, so leave those unticked.
 5. Click **Generate and download firmware**. The grblHAL docs say this takes about 10 to 30 seconds. The page also prints your chosen options to the browser console (press F12), a handy record of exactly what you built.
-6. Save the download.  (Your web browser will probably save it automatically to it's default download directory).   The filename should be called "firmware.uf2" unless there is already a file of that name in that directory.  If so, check what your operating system renamed the new file to.
+6. Save the download. (Your web browser will probably save it automatically to its default download directory). The filename should be called "firmware.uf2" unless there is already a file of that name in that directory. If so, check what your operating system renamed the new file to.
 
 | Setting (General tab) | Choose | Why |
 | --- | --- | --- |
@@ -216,7 +216,7 @@ If you are updating existing firmware, save the output of `$$` first; updates ca
 
 The red boxes mark the three parts used below: the **USB Power** jumper (top right, beside the USB-C socket), the **Boot** jumper pins (centre) and the **Reset** button (lower left). 
 
-**WARNING:** Always disconnect the 12-24V DC source from the board, before plugging in the USB Power jumper, then remove this and the boot jumper after the firmware upload process has completed, before re-connecting the external power supply.)
+**WARNING:** Always disconnect the 12 to 24 V DC source from the board, before plugging in the USB Power jumper, then remove this and the boot jumper after the firmware upload process has completed, before re-connecting the external power supply.
 
 1. Power the board. The normal way is the 12 to 24 V DC supply with the motors disconnected, as in Step 2. To flash on USB power alone, fit the board's USB power jumper first and remove it afterwards.
 2. Fit a jumper cap on the two **Boot** pins.
@@ -227,7 +227,7 @@ The red boxes mark the three parts used below: the **USB Power** jumper (top rig
 **C. Copy the firmware onto the board.**
 
 1. Drag the `.uf2` file onto the RPI-RP2 drive.
-2. When the copy finishes, the board reboots by itself and the drive disappears (BTT's manual).  This happens very quickly.   A new serial port should then appear; part D checks it.
+2. When the copy finishes, the board reboots by itself and the drive disappears (BTT's manual). This happens very quickly. A new serial port should then appear; part D checks it.
 3. Unplug USB, remove the Boot jumper (and the USB power jumper if you fitted it), then press Reset or power-cycle the board.
 
 **D. Check it worked.** Carry on with Step 2, which opens a terminal and reads `$I` and `$$`. Confirm that `$140` to `$143` (motor current) and `$150` to `$153` (microsteps) exist. If they are missing, re-check the Driver and Boards selections and build again.
@@ -250,7 +250,7 @@ Steps 2 to 5 type commands such as `$I` and `$$` straight to the board. A sender
 | OS | Supplied with the system | Open source, free to install | How to install |
 | --- | --- | --- | --- |
 | Windows | None that I could confirm. Device Manager only shows you the COM port number | [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) and [Tera Term](https://teratermproject.github.io/index-en.html) (BSD licence) | Download the installer from each project's own site |
-| macOS | `screen`, included with macOS ([Adafruit](https://learn.adafruit.com/adafruit-metro-rp2350/advanced-serial-console-on-mac-and-linux)) | `tio`, `picocom`  and `minicom` | Homebrew: `brew install tio` (see the Homebrew steps below) |
+| macOS | `screen`, included with macOS ([Adafruit](https://learn.adafruit.com/adafruit-metro-rp2350/advanced-serial-console-on-mac-and-linux)) | `tio`, `picocom` and `minicom` | Homebrew: `brew install tio` (see the Homebrew steps below) |
 | Linux | `screen` is often already installed; if not, install it from your package manager ([Adafruit](https://learn.adafruit.com/adafruit-rp2040-feather-thinkink/advanced-serial-console-on-linux)) | `tio`, `picocom`, `minicom` | `sudo apt install tio` or `sudo dnf install tio` ([install list](https://linuxcommandlibrary.com/man/tio)); the same pattern works for `picocom` |
 
 If you want the simplest choice: PuTTY on Windows, `screen` on a Mac (nothing to install), and `tio` on Linux or on a Mac with Homebrew.
@@ -269,7 +269,7 @@ If you want the simplest choice: PuTTY on Windows, `screen` on a Mac (nothing to
 3. **Built-in `screen`:** run `screen /dev/tty.usbmodem1101 115200`, using your own port name. To leave, press Ctrl-A, then K; `screen` may ask you to confirm ([a user's tip on SparkFun](https://learn.sparkfun.com/tutorials/terminal-basics/discuss)). Adafruit warns that `screen` is rough around the edges and suggests `tio` if you can install it.
 4. **`tio`:** after installing it with Homebrew, run `tio /dev/tty.usbmodem1101`. Its defaults are 115200, 8 data bits, no parity, 1 stop bit and no flow control ([tio README](https://github.com/FS-make-simple/tio)).
 
-#### To easily install these opens source packages on a Mac, "Homebrew" is the after-market package manager  most often used.  Check for it, and install it if it is missing
+#### To easily install these open source packages on a Mac, "Homebrew" is the third-party package manager most often used. Check for it, and install it if it is missing
 
 **Step 1. Check your Mac.** Homebrew needs macOS Sequoia (15) or newer. To see which chip you have, open the Apple menu and choose **About This Mac**.
 
@@ -305,7 +305,7 @@ The script explains what it will do and then pauses before it does it ([brew.sh]
 
 ### What to type first
 
-Press Enter, then type `$I` and press Enter. The board should print its version and build information. `$$` lists the settings.  Steps 2 and 3 say which values to expect and what to change. Close the terminal before you open gSender.
+Press Enter, then type `$I` and press Enter. The board should print its version and build information. `$$` lists the settings. Steps 2 and 3 say which values to expect and what to change. Close the terminal before you open gSender.
 
 ### If nothing appears
 
@@ -512,13 +512,13 @@ Power the Pi from its own supply while you commission, until you have read BTT's
 
 **If the sender shows an error on a line:** the line number points into the G-code file. Open that line in a text editor and check whether the post wrote a code that Grbl-family firmware does not accept, as Autodesk's Grbl guide warns ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)).
 
-## New and emerging open source CAD and CAM alternatives to Autodesk's Fusion360.
+## New and emerging open source CAD and CAM alternatives to Autodesk's Fusion
 
 **Stay with Fusion for now.** Fusion does two separate jobs in one program, and these two new open source tools split them: SOLIDcraft designs the 3D model (CAD) and CamCraft turns that model into G-code (CAM). To replace Fusion you would need both. Both are very young and changing fast, and the author's note at the time of writing is that they are only weeks old. For a stable experience, keep using Fusion, and check back every few months to reassess.
 
 **Which tool does which job**
 
-- **Design the part (CAD): SolidCraft.** You draw and edit the 3D model here. It makes model files, not G-code. Its README lists STEP, IGES, 3MF, STL, OBJ and glTF as formats it reads and writes where supported.
+- **Design the part (CAD):** **SOLIDcraft.** You draw and edit the 3D model here. It makes model files, not G-code. Its README lists STEP, IGES, 3MF, STL, OBJ and glTF as formats it reads and writes where supported.
 - **Make the toolpaths and G-code (CAM): CamCraft.** It imports a 3D model, then you set the stock, work offset, tools and operations, and it posts G-code through a post processor. It does not design the part. Its machines guide lists a grblHAL post.
 - **The hand-off.** SOLIDcraft saves a model file, CamCraft opens it, CamCraft posts G-code, and gSender sends it to the mill. This is the same order as Fusion's Design and Manufacture workspaces. I have not confirmed which file formats CamCraft can import, so check that a format SOLIDcraft exports is on its import list before you rely on the pair.
 
