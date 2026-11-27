@@ -1,7 +1,7 @@
 # Simple CNC mill controller setup guide
 (running grblHAL on a BTT SKR Pico)
 
-Nov 26, 2026 · Russell Brett
+Nov 27, 2026 · Russell Brett
 
 ![The SKR Pico connectors this guide uses](images/skr-pico-connectors.svg)
 
@@ -123,13 +123,15 @@ The Pi and its touchscreen are one unit; a single USB-C cable carries all G-code
 | 12 to 24 V DC PSU | Size it for all motors plus margin; one grblHAL SKR Pico build guide recommends 150 W minimum for a foam cutter |
 | Limit switches (NC), probe, spindle | Wiring covered in step 4 |
 
-**Power supply tip: reuse an old laptop or docking-station charger.** These usually output around 19 V DC, which sits inside the SKR Pico's 12 to 24 V DC input range ([BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)) and within the 5.5 to 28 V motor-supply range quoted for TMC2209 driver modules ([Fysetc](https://fysetc.github.io/Silent2209)). A used 65 to 90 W unit is a cheap way to power the board and steppers. The checks below are my engineering notes, not from the sources:
+**Power supply tip: reuse an old laptop or docking-station charger.** These usually output around 19 V DC, which sits inside the SKR Pico's 12 to 24 V DC input range ([BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)) and within the 5.5 to 28 V motor-supply range quoted for TMC2209 driver modules.
 
-- **Read the label.** You need DC output (not AC), the voltage, and the amps. Volts × amps = watts. Add up your motor currents with a margin; the foam-cutter build guide I read recommends at least 150 W for its machine ([RC Keith](https://rckeith.co.uk/electronics-build-guide-btt-skr-pico/)), so a small charger suits only modest motor currents. Test before trusting it.
+A used 65 to 90 W unit is a cheap way to power the board and steppers.
+
+- **Read the label.** You need DC output (not AC), the voltage, and the amps. Volts × amps = watts. Add up your motor currents with a margin; the foam-cutter build guide I read recommends at least 150 W for its machine ([RC Keith](https://rckeith.co.uk/electronics-build-guide-btt-skr-pico/)), so a small charger suits only modest motor currents. Test before trusting it, and
 - **Keep it at or under 24 V.** 19 to 20 V is fine. I could not confirm the board's tolerance above 24 V, so do not use higher-voltage chargers.
 - **Check polarity with a multimeter** before wiring. Most barrel plugs are centre-positive, but not all. Use a barrel-jack-to-screw-terminal adapter rather than hacking mains-side wiring, and have an adult supervise.
 - **Branded chargers can refuse unknown loads.** Some laptop chargers have an extra ID wire and cut power or limit output without it. If the output is dead or low, try another charger.
-- **USB-C laptop chargers are not a drop-in.** They negotiate their voltage and need a trigger module to deliver a fixed one.
+- **WARNING: USB-C based laptop chargers are not compatible.** They negotiate their voltage and need a trigger module to deliver a fixed one.
 - **Fit a fuse and the E-stop on the DC side**, as in step 4.
 
 ## Read first: known SKR Pico risks
@@ -139,7 +141,7 @@ These come from the grblHAL issue tracker and BTT's wiki. None is a reason to av
 - **Start-up current.** An RP2040 issue reports high current at power-up: the board's Vref pin is unconnected, so the TMC2209 defaults to about 73% of maximum current until grblHAL sets it over UART. One user measured a peak near 200 mA fading to about 35 mA idle with `$1=25` and `$37=0`. The thread does not say which build, if any, fixed it, so confirm behaviour on your own board and PSU ([issue 74](https://github.com/grblHAL/RP2040/issues/74)).
 - **Driver UART addresses.** The standard SKR Pico build maps X=0, Y=2, Z=1, A=3. A pull request notes that the Hotwire variant fell through to a generic map with Y and Z swapped ([PR 204](https://github.com/grblHAL/RP2040/pull/204)). Use the standard `BTT SKR Pico` board in the Web Builder, not the Hotwire variant.
 - **Sensorless homing excludes external switches.** BTT's wiki warns that with sensorless homing enabled, external endstops cannot be used ([BTT wiki](https://global.bttwiki.com/SKR%20Pico.html)). For a mill, my recommendation is physical switches: they are repeatable, and StallGuard needs per-axis tuning.
-- **No spare drivers.** The TMC2209s are soldered on, so a failed driver means a new board.
+- **No spare drivers.** The TMC2209s are soldered on, so a failed driver means a new board.  This is why it's not a good idea to plug or unplug motors whilst the board is powered.
 - **Set current before you enable motors.** If the current setting reads 0, a build guide warns full current can reach the motors and overheat them ([RC Keith build guide](https://rckeith.co.uk/electronics-build-guide-btt-skr-pico/)).
 - **Pi power.** BTT advertises a 5 V output for an external Pi ([BTT release post](https://bigtree-tech.com/blogs/news/new-release-bigtreetech-skr-pico-v1-0-control-board)), but its wiki does not say whether powering the Pi from the board and via USB together is safe. I could not verify this, so read BTT's pinout PDF before connecting both.
 
@@ -196,7 +198,7 @@ If you are updating existing firmware, save the output of `$$` first; updates ca
 3. Set **Boards** to "BTT SKR Pico 1.0". Do not pick the "Hotwire" variant (see "Read first"). The blue **i** beside Boards lists what the build supports for this board: up to 4 axes and 4 motors, native USB, a probe input, one PWM spindle, ModBus, and no SD card, WiFi or I2C. The page itself warns that list may be incorrect.
 4. On the **General** tab, set the options in the table below. Leave the other tabs (Plugins, Network/WebUI, Advanced features, 3rd party plugins, Optional inputs, I/O expansion) at their defaults for a first build. The page warns that 3rd party plugins may break the compile, so leave those unticked.
 5. Click **Generate and download firmware**. The grblHAL docs say this takes about 10 to 30 seconds. The page also prints your chosen options to the browser console (press F12), a handy record of exactly what you built.
-6. Save the download. I have not confirmed whether you get a bare `.uf2` or a zip: the community docs say `.uf2` for RP2040, while the core wiki says the Web Builder delivers a zip. If it is a zip, unzip it and use the `.uf2` inside.
+6. Save the download.  (Your web browser will probably save it automatically to it's default download directory).   The filename should be called "firmware.uf2" unless there is already a file of that name in that directory.  If so, check what your operating system renamed the new file to.
 
 | Setting (General tab) | Choose | Why |
 | --- | --- | --- |
@@ -208,13 +210,15 @@ If you are updating existing firmware, save the output of `$$` first; updates ca
 | Spindle 1 | PWM (default) | Match your spindle hardware. On/Off suits a relay-switched spindle. The VFD entries (Huanyang and others) are for spindle drives, so read the grblHAL spindle docs before using one. |
 | Spindles 2 to 4, ModBus RTU | Disabled (default) | Not needed for a basic mill. |
 
-**B. Put the board in bootloader mode.** The RP2040 has a built-in bootloader that appears on your computer as a USB drive. On the SKR Pico you enter it with a jumper and the Reset button, as BTT's manual describes ([BTT manual](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/BTT%20SKR%20Pico%20V1.0%20Instruction%20Manual.pdf), section IV; the Voron docs give the same steps). The grblHAL docs describe holding a BOOTSEL button instead, which is the plain Pico method.
+**B. Put the board in bootloader mode.** The RP2040 has a built-in bootloader that appears on your computer as a USB drive. On the SKR Pico you enter it with a jumper and the Reset button, as BTT's manual describes ([BTT manual](https://github.com/bigtreetech/SKR-Pico/blob/3fa005258baeb2ce4d6e629921c4474612d13d29/BTT%20SKR%20Pico%20V1.0%20Instruction%20Manual.pdf), section IV).
 
 ![SKR Pico V1.0 with the USB power jumper, the Boot jumper pins and the Reset button marked in red](images/skr-pico-boot-reset-usbpower.png)
 
-The red boxes mark the three parts used below: the **USB Power** jumper (top right, beside the USB-C socket), the **Boot** jumper pins (centre) and the **Reset** button (lower left). Picture supplied by the guide's author; the red labels are theirs.
+The red boxes mark the three parts used below: the **USB Power** jumper (top right, beside the USB-C socket), the **Boot** jumper pins (centre) and the **Reset** button (lower left). 
 
-1. Power the board. The normal way is the 12 to 24 V DC supply with the motors disconnected, as in Step 2. To flash on USB power alone, fit the board's USB power jumper first and remove it afterwards (Voron docs).
+**WARNING:** Always disconnect the 12-24V DC source from the board, before plugging in the USB Power jumper, then remove this and the boot jumper after the firmware upload process has completed, before re-connecting the external power supply.)
+
+1. Power the board. The normal way is the 12 to 24 V DC supply with the motors disconnected, as in Step 2. To flash on USB power alone, fit the board's USB power jumper first and remove it afterwards.
 2. Fit a jumper cap on the two **Boot** pins.
 3. Connect a USB-C data cable from the board to the PC or Pi. A charge-only cable will not work.
 4. Press **Reset**. A drive named RPI-RP2 should appear in your file manager. BTT's manual spells it "RPI-PR2", which looks like a typo; the grblHAL docs give RPI-RP2.
@@ -222,9 +226,9 @@ The red boxes mark the three parts used below: the **USB Power** jumper (top rig
 
 **C. Copy the firmware onto the board.**
 
-1. Drag the `.uf2` file onto the RPI-RP2 drive. On a Pi without a desktop, the drive may need mounting by hand (the Voron docs show it appearing as `/dev/sda1`).
-2. When the copy finishes, the board reboots by itself and the drive disappears (BTT's manual). A new serial port should appear; part D checks it.
-3. Unplug USB, remove the Boot jumper (and the USB power jumper if you fitted it), then press Reset or power-cycle the board (BTT's manual).
+1. Drag the `.uf2` file onto the RPI-RP2 drive.
+2. When the copy finishes, the board reboots by itself and the drive disappears (BTT's manual).  This happens very quickly.   A new serial port should then appear; part D checks it.
+3. Unplug USB, remove the Boot jumper (and the USB power jumper if you fitted it), then press Reset or power-cycle the board.
 
 **D. Check it worked.** Carry on with Step 2, which opens a terminal and reads `$I` and `$$`. Confirm that `$140` to `$143` (motor current) and `$150` to `$153` (microsteps) exist. If they are missing, re-check the Driver and Boards selections and build again.
 
@@ -232,7 +236,7 @@ The red boxes mark the three parts used below: the **USB Power** jumper (top rig
 
 Steps 2 to 5 type commands such as `$I` and `$$` straight to the board. A sender such as gSender can do this, but any program that opens the board's USB serial port will do. A terminal is handy when you want to check the firmware before a sender is installed, or when a sender will not connect.
 
-**Close gSender and any other sender first.** Only one program should hold the port at a time. One LightBurn user with an SKR Pico had to reset the controller before another program could use the port ([LightBurn forum](https://forum.lightburnsoftware.com/t/connecting-to-grblhal-without-welcome-message/92961)).
+**Close gSender and any other sender first.** Only one program should hold the port at a time.
 
 **Settings to use**
 
@@ -243,13 +247,13 @@ Steps 2 to 5 type commands such as `$I` and `$$` straight to the board. A sender
 
 **What you can use on each system**
 
-|  | Supplied with the system | Open source, free to install | How to install |
+| OS | Supplied with the system | Open source, free to install | How to install |
 | --- | --- | --- | --- |
-| Windows | None that I could confirm. Device Manager only shows you the COM port number | [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) and [Tera Term](https://teratermproject.github.io/index-en.html) (BSD licence, per [Wikipedia](https://en.wikipedia.org/wiki/Tera_Term)) | Download the installer from each project's own site |
-| macOS | `screen`, included with macOS ([Adafruit](https://learn.adafruit.com/adafruit-metro-rp2350/advanced-serial-console-on-mac-and-linux)) | `tio`, `picocom` ([GPL-2.0-or-later](https://formulae.brew.sh/formula/picocom)) and `minicom` ([GPL-2.0-or-later](https://formulae.brew.sh/formula/minicom)) | Homebrew: `brew install tio` (see the Homebrew steps below) |
+| Windows | None that I could confirm. Device Manager only shows you the COM port number | [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) and [Tera Term](https://teratermproject.github.io/index-en.html) (BSD licence) | Download the installer from each project's own site |
+| macOS | `screen`, included with macOS ([Adafruit](https://learn.adafruit.com/adafruit-metro-rp2350/advanced-serial-console-on-mac-and-linux)) | `tio`, `picocom`  and `minicom` | Homebrew: `brew install tio` (see the Homebrew steps below) |
 | Linux | `screen` is often already installed; if not, install it from your package manager ([Adafruit](https://learn.adafruit.com/adafruit-rp2040-feather-thinkink/advanced-serial-console-on-linux)) | `tio`, `picocom`, `minicom` | `sudo apt install tio` or `sudo dnf install tio` ([install list](https://linuxcommandlibrary.com/man/tio)); the same pattern works for `picocom` |
 
-If you want the simplest choice: PuTTY on Windows, `screen` on a Mac (nothing to install), and `tio` on Linux or on a Mac with Homebrew. I did not check the licence of `tio` or `screen`.
+If you want the simplest choice: PuTTY on Windows, `screen` on a Mac (nothing to install), and `tio` on Linux or on a Mac with Homebrew.
 
 ### Windows
 
@@ -265,11 +269,9 @@ If you want the simplest choice: PuTTY on Windows, `screen` on a Mac (nothing to
 3. **Built-in `screen`:** run `screen /dev/tty.usbmodem1101 115200`, using your own port name. To leave, press Ctrl-A, then K; `screen` may ask you to confirm ([a user's tip on SparkFun](https://learn.sparkfun.com/tutorials/terminal-basics/discuss)). Adafruit warns that `screen` is rough around the edges and suggests `tio` if you can install it.
 4. **`tio`:** after installing it with Homebrew, run `tio /dev/tty.usbmodem1101`. Its defaults are 115200, 8 data bits, no parity, 1 stop bit and no flow control ([tio README](https://github.com/FS-make-simple/tio)).
 
-#### Homebrew on the Mac: check for it, and install it if it is missing
+#### To easily install these opens source packages on a Mac, "Homebrew" is the after-market package manager  most often used.  Check for it, and install it if it is missing
 
-Homebrew's own documentation does not describe a check for whether it is installed ([Homebrew install docs](https://docs.brew.sh/Installation)), so steps 2 and 3 below are plain shell commands that I am suggesting, not Homebrew's.
-
-**Step 1. Check your Mac.** Homebrew needs macOS Sequoia (15) or newer, and it treats Intel Macs as a lower-priority configuration ([Homebrew install docs](https://docs.brew.sh/Installation)). To see which chip you have, open the Apple menu and choose **About This Mac**.
+**Step 1. Check your Mac.** Homebrew needs macOS Sequoia (15) or newer. To see which chip you have, open the Apple menu and choose **About This Mac**.
 
 **Step 2. Check whether Homebrew is installed.** In Terminal, run:
 
@@ -281,7 +283,7 @@ If it prints a version number, Homebrew is installed and on your path. Skip to s
 
 **Step 3. If you see "command not found", look for it.** It may be installed but missing from your path. Check the default location: `ls /opt/homebrew/bin/brew` on an Apple Silicon Mac, or `ls /usr/local/bin/brew` on an Intel Mac (the default prefixes are listed on [brew.sh](https://brew.sh/)). If the file exists, go to step 5. If you get "No such file", Homebrew is not installed.
 
-**Step 4. Install it.** Copy the command only from [brew.sh](https://brew.sh/), not from a blog post, because old copies exist. At the time of writing it is:
+**Step 4. Install it.** Copy the command only from [brew.sh](https://brew.sh/), because old copies exist. At the time of writing, the correct command was:
 
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -303,7 +305,7 @@ The script explains what it will do and then pauses before it does it ([brew.sh]
 
 ### What to type first
 
-Press Enter, then type `$I` and press Enter. The board should print its version and build information. `$$` lists the settings ([Easel forum](https://forum.easel.com/t/using-grbl-direct-communication/16073)). Steps 2 and 3 say which values to expect and what to change. Close the terminal before you open gSender.
+Press Enter, then type `$I` and press Enter. The board should print its version and build information. `$$` lists the settings.  Steps 2 and 3 say which values to expect and what to change. Close the terminal before you open gSender.
 
 ### If nothing appears
 
@@ -510,13 +512,13 @@ Power the Pi from its own supply while you commission, until you have read BTT's
 
 **If the sender shows an error on a line:** the line number points into the G-code file. Open that line in a text editor and check whether the post wrote a code that Grbl-family firmware does not accept, as Autodesk's Grbl guide warns ([Autodesk](https://www.autodesk.com/products/fusion-360/blog/fusion-360-grbl-post/)).
 
-## New and emerging open source CAD and CAM options
+## New and emerging open source CAD and CAM alternatives to Autodesk's Fusion360.
 
-**Stay with Fusion for now.** Fusion does two separate jobs in one program, and these two new open source tools split them: SOLIDcraft designs the 3D model (CAD) and CamCraft turns that model into G-code (CAM). To replace Fusion you would need both. Both are very young and changing fast, and the author's note at the time of writing is that they are only weeks old (I could not confirm release dates). For a stable experience, keep using Fusion, and check back every few months to reassess.
+**Stay with Fusion for now.** Fusion does two separate jobs in one program, and these two new open source tools split them: SOLIDcraft designs the 3D model (CAD) and CamCraft turns that model into G-code (CAM). To replace Fusion you would need both. Both are very young and changing fast, and the author's note at the time of writing is that they are only weeks old. For a stable experience, keep using Fusion, and check back every few months to reassess.
 
 **Which tool does which job**
 
-- **Design the part (CAD): SOLIDcraft.** You draw and edit the 3D model here. It makes model files, not G-code. Its README lists STEP, IGES, 3MF, STL, OBJ and glTF as formats it reads and writes where supported.
+- **Design the part (CAD): SolidCraft.** You draw and edit the 3D model here. It makes model files, not G-code. Its README lists STEP, IGES, 3MF, STL, OBJ and glTF as formats it reads and writes where supported.
 - **Make the toolpaths and G-code (CAM): CamCraft.** It imports a 3D model, then you set the stock, work offset, tools and operations, and it posts G-code through a post processor. It does not design the part. Its machines guide lists a grblHAL post.
 - **The hand-off.** SOLIDcraft saves a model file, CamCraft opens it, CamCraft posts G-code, and gSender sends it to the mill. This is the same order as Fusion's Design and Manufacture workspaces. I have not confirmed which file formats CamCraft can import, so check that a format SOLIDcraft exports is on its import list before you rely on the pair.
 
@@ -529,15 +531,11 @@ Power the Pi from its own supply while you commission, until you have read BTT's
 | Version seen | 0.26.0, pre-1.0 | Not stated on the page I read (its update notes mention 0.11 to 0.14) |
 | Files | Not stated on the page I read | STEP, IGES, 3MF, STL, OBJ and glTF in and out where supported (per its README) |
 | Standout feature | Checks every toolpath against the part, stock, fixtures and machine, and refuses to post G-code it cannot show is safe | Headless command-line tool and an MCP server, so AI agents can drive it |
-| Grbl or grblHAL | Grbl post processors are available, or planned to be in the roadmap. |  |
+| Post Processor interoperability with Grbl or grblHAL | Grbl post processors are available. | Model creation doesn't need a post processor compatible layer. |
 
 **What this means for your mill.** CamCraft could one day replace Fusion's CAM stage. Its docs say every posted program is a first draft: check it in simulation, then dry-run it with the spindle off and Z raised. SOLIDcraft covers the other half, the modelling. It makes no G-code, so it cannot replace Fusion on its own, and the two work together only if CamCraft can import what SOLIDcraft exports.
 
-**Installing them.** The suggested route is [CraftLauncher](https://github.com/EricVogt93/artcraft-launcher) (repository `artcraft-launcher`), a native desktop app by Eric Vogt for installing, launching and updating apps in the ArtCraft family, with builds for Linux, Windows, macOS and FreeBSD. Three cautions from its README:
-
-- It does not name CamCraft or SOLIDcraft. It says new public `*craft` repositories under `storytold` are found automatically and that availability depends on published packages. Check that both appear in the launcher before relying on it.
-- It is an independent project, not affiliated with ArtCraft or Storytold, with very few commits and little runtime testing outside Linux. App downloads are checked against SHA-256, and the README mentions no signature check for them.
-- SOLIDcraft lives under a different GitHub organisation (`tangency-labs`) and its page does not mention ArtCraft, so the launcher's automatic discovery of `storytold` repositories may not cover it. I have not checked.
+**Installing them.** The suggested route is [CraftLauncher](https://github.com/EricVogt93/artcraft-launcher) (repository `artcraft-launcher`), a native desktop app by Eric Vogt for installing, launching and updating apps in the ArtCraft family, with builds for Linux, Windows, macOS and FreeBSD.
 
 If a package does not appear in the launcher, use the direct routes: CamCraft's desktop build from its GitHub releases page (0.26.0 when I looked), and SOLIDcraft's downloads (Windows, macOS, and Linux AppImage and Snap, per its page). Look for published checksums before you run anything.
 
