@@ -504,7 +504,7 @@ Until the machine is homed and limits tested, keep spindle power off and use a h
 
 ![Our build: SKR Pico connections, with FAN1 driving the relay coil, X, Y and Z motors, power in and USB, and the limit switches optional](images/skr-our-build.jpg)
 
-*Figure: what connects where in our build. Amber boxes are optional (limit switches, not fitted yet), grey boxes are unused. Based on the [Voron SKR Pico wiring diagram](https://docs.vorondesign.com/build/electrical/v0_skr_pico_wiring.html), relabelled for this guide. The Voron page names no author or licence for that image, so check its terms before reusing it elsewhere. Polarity marks follow that diagram: check them against the markings on your board.*
+*Figure: what connects where in our build. Amber boxes are optional (limit switches, not fitted yet), grey boxes are unused. Based on the [Voron SKR Pico wiring diagram](https://docs.vorondesign.com/build/electrical/v0_skr_pico_wiring.html), relabelled for this guide. Polarity marks follow that diagram: check them against the markings on your board.*
 
 ![Schematic: PSU, fuse, E-stop, SKR Pico, relay module, and the mains side with the spindle](images/spindle-relay-wiring.png)
 
