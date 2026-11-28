@@ -1,7 +1,7 @@
 # Simple CNC mill controller setup guide
 (running grblHAL on a BTT SKR Pico)
 
-Nov 27, 2026 · Russell Brett
+Nov 28, 2026 · Russell Brett
 
 ![The SKR Pico connectors this guide uses](images/skr-pico-connectors.svg)
 
@@ -736,9 +736,9 @@ If a package does not appear in the launcher, use the direct routes: CamCraft's 
 
 *Figure: MitCad 0.75.0, CNC workspace, Machines and Tools, Edit Machine. The Controller field is set to grblHAL. The values are a test machine and not a recommendation for this build.*
 
-**How far to trust it.** The author found it more complete than the other open source tools above, because it has the whole path in one program: model, machine, toolpaths. That is a judgement from using it, not a measured comparison. The GitHub page I read does not mention CNC, laser or CAM, and does not name grbl or grblHAL, and its release list shows 0.23.0 as the latest and the README says 0.1.0, which does not match the 0.75.0 in the screenshot ([MitCad releases](https://github.com/mitcad/Mitcad/releases)). The public page appears to be behind the build in the screenshot, so I could not confirm what the CNC workspace can do from it. The same page says the project is under active development, had 11 stars and no named contributors when I read it, and lists direct modelling without history as a known gap. Treat it as promising and unproven: I have not generated or run G-code from it on this controller. Before relying on it, post a small test part and compare the G-code with Fusion's using the read-the-file checklist in Step 7, then check mode (`$C`) and a dry run with the spindle off and Z raised.
+**How far to trust it.** The author found it more funtionally complete than the other open source tools above at time of writing, but expects these things may change rapidly, with the effort being put into the \*Craft series of tools.  The biggest benefit was it has the whole path in one program: model, machine, toolpaths.  Treat it as promising and unproven: I have not generated or run G-code from it on this controller. Before relying on it, post a small test part and compare the G-code with Fusion's using the read-the-file checklist in Step 7, then check mode (`$C`) and a dry run with the spindle off and Z raised.
 
-**Older open source options.** FreeCAD has a CAM workbench, which its wiki says has a development roadmap ([FreeCAD wiki](https://wiki.freecad.org/CAM_Development_Roadmap)). I have not tested it against this controller.
+**Older open source options.** FreeCAD has a CAM workbench, which its wiki says has a development roadmap ([FreeCAD wiki](https://wiki.freecad.org/CAM_Development_Roadmap)). I have not tested it against this controller either.
 
 ## References and other supporting documentation
 
